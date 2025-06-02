@@ -1,10 +1,14 @@
 package com.RQ.tuyunthinktank.service.impl;
 
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
+import com.RQ.tuyunthinktank.model.dto.user.UserQueryRequest;
 import com.RQ.tuyunthinktank.model.vo.LoginUserVO;
+import com.RQ.tuyunthinktank.model.vo.UserVO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.service.UserService;
@@ -15,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
 * @author RQ
@@ -144,6 +150,106 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
         return loginUserVO;
+    }
+
+    /**
+     * @description  将用户信息封装为 UserVO (脱敏)
+     * @return: com.RQ.tuyunthinktank.model.vo.UserVO
+     * @author RQ
+     * @date: 2025/6/2 下午1:11
+     */
+    @Override
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+/**
+ * @description  将用户信息封装为 UserVO<List>列表 (脱敏)
+ * @return: java.util.List<com.RQ.tuyunthinktank.model.vo.UserVO>
+ * @author RQ
+ * @date: 2025/6/2 下午1:11
+ */
+    @Override
+    public List<UserVO> getUserVOList(List<User> user) {
+        if (user == null) {
+            return null;
+        }
+        // 使用 Stream API 进行函数式编程转换
+        return user.stream()          // 1. 将 List<User> 转换为 Stream<User> 流
+                .map(this::getUserVO)     // 2. 映射操作：对每个 User 对象调用 getUserVO 方法转换为 UserVO 对象
+                .collect(                 // 3. 终止操作：将流元素收集到新集合
+                        Collectors.toList()  // 4. 收集器：将流元素收集到 List<UserVO> 中
+                );
+    }
+
+    /**
+     * @description  获取当前登录用户
+     * @param request
+     * @return: com.RQ.tuyunthinktank.model.entity.User
+     * @author RQ
+     * @date: 2025/6/1 下午2:58
+     */
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        //1.先判断是否已登录
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        // 修改这里：将强制转换为LoginUserVO
+        LoginUserVO currentUser = (LoginUserVO) userObj;
+        if (currentUser == null || currentUser.getId() == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //2.从数据库查询（追求性能的话可以注释，直接走缓存）
+        long userId = currentUser.getId();
+        // 保持返回User类型
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return user;
+    }
+/**
+ * @description   分页查询
+ * @return: com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.RQ.tuyunthinktank.model.entity.User>
+ * @author RQ
+ * @date: 2025/6/2 下午2:11
+ */
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        return queryWrapper;
+    }
+
+
+    @Override
+    public boolean userLogout(HttpServletRequest request) {
+        //1.先判断是否已登录
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        if (userObj  == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //2.移除登录态
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return true;
     }
 
 }
