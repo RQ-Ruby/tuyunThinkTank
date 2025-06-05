@@ -55,17 +55,50 @@
         </template>
         <!-- 操作  -->
         <template v-else-if="column.key === 'action'">
+          <a-space wrap>
+          <a-button type="primary" @click="doEdit(record.id)">编辑</a-button>
           <a-button danger @click="doDelete(record.id)">删除</a-button>
+          </a-space>
         </template>
+
       </template>
     </a-table>
   </div>
+
+  <!-- 编辑用户弹窗 -->
+  <!-- 在表格下方添加编辑模态框 -->
+  <a-modal v-model:visible="visible" title="编辑用户" >
+    <a-form :model="updateForm" layout="vertical">
+      <a-form-item label="用户名">
+        <a-input v-model:value="updateForm.userName" placeholder="请输入用户名" />
+      </a-form-item>
+      <a-form-item label="头像">
+        <a-input v-model:value="updateForm.userAvatar" placeholder="请输入头像地址" />
+      </a-form-item>
+      <a-form-item label="简介">
+        <a-input v-model:value="updateForm.userProfile" placeholder="请输入简介" />
+      </a-form-item>
+      <a-form-item label="用户角色">
+        <a-select v-model:value="updateForm.userRole" placeholder="请选择用户身份">
+          <a-select-option value="user">普通用户</a-select-option>
+          <a-select-option value="admin">管理员</a-select-option>
+        </a-select>
+      </a-form-item>
+      <!-- 表单字段保持与 updateForm 的绑定 -->
+    </a-form>
+    <template #footer>
+      <a-button @click="handleCancel">取消</a-button>
+      <a-button type="primary" @click="handleUpdate">确定</a-button>
+    </template>
+  </a-modal>
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { deleteUserUsingPost, listUserVoByPageUsingPost } from '@/api/userController'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
+import { getUserVoByIdUsingGet, updateUserUsingPost } from '@/api/userController' // 新增导入
+
 // 表格列定义
 const columns = [
   {
@@ -172,6 +205,46 @@ const doSearch = () => {
   fetchData()
 }
 
+//1.是否显示编辑对话框
+const visible = ref(false)
+//2.编辑用户 - 完善后的逻辑
+const doEdit = async (id: number) => {
+  try {
+    const res = await getUserVoByIdUsingGet({ id })
+    if (res.data.code === 0 && res.data.data) {
+      // 使用 Object.assign 保持响应性
+      Object.assign(updateForm, res.data.data)
+      visible.value = true
+    }
+  } catch (e) {
+    message.error('获取用户信息失败')
+  }
+}
+//3.初始化更新表单
+const updateForm = reactive<API.UserUpdateRequest>({
+  id: undefined,
+  userName: '',
+  userRole: 'user',
+  userProfile: '',
+  userAvatar: ''
+})
+//4.提交更新
+const handleUpdate = async () => {
+  const updateRes = await updateUserUsingPost(updateForm)
+  if (updateRes.data.code === 0) {
+    message.success('更新成功')
+    visible.value = false
+    fetchData() // 刷新表格
+  } else {
+    message.error('更新失败: ' + updateRes.data.message)
+  }
+}
+
+//5.取消编辑
+const handleCancel = () => {
+  visible.value = false
+}
+
 //删除用户
 const doDelete = async (id: number) => {
  if(id==null){
@@ -188,5 +261,7 @@ const doDelete = async (id: number) => {
  }
 
 }
+
+
 
 </script>
