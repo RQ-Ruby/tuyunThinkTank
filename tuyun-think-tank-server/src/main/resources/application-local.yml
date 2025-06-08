@@ -1,8 +1,0 @@
-# 对象存储配置（从腾讯云获取）
-cos:
-  client:
-    host: https://tuyun-1363055769.cos.ap-beijing.myqcloud.com
-    secretId: AKIDsfIkz0KVTEtKYcsxqVxBwWs2zjIdkhRz
-    secretKey: AKIDsfIkz0KVTEtKYcsxqVxBwWs2zjIdkhRz
-    region: ap-beijing
-    bucket: tuyun-1363055769
