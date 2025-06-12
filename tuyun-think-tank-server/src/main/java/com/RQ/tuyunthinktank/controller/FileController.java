@@ -6,7 +6,7 @@ import com.RQ.tuyunthinktank.common.ResultUtils;
 import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
-import com.RQ.tuyunthinktank.manage.CosManager;
+import com.RQ.tuyunthinktank.manage.SaveManage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +22,7 @@ import java.io.File;
 @Slf4j
 public class FileController {
     @Autowired
-    private CosManager cosManager;
+    private SaveManage saveManage;
 
 /**
      * 测试文件上传
@@ -42,7 +42,7 @@ public class FileController {
             // 上传文件
             file = File.createTempFile(filepath, null);
             multipartFile.transferTo(file);
-            cosManager.putObject(filepath, file);
+            saveManage.putObject(filepath, file);
             // 返回可访问地址
             return ResultUtils.success(filepath);
         } catch (Exception e) {
