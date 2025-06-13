@@ -6,6 +6,7 @@ import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.model.dto.user.UserQueryRequest;
+import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.LoginUserVO;
 import com.RQ.tuyunthinktank.model.vo.UserVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -239,7 +240,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return queryWrapper;
     }
 
-
+/**
+ * @description  用户注销
+ * @author RQ
+ * @date 2025/6/13 下午3:41
+ */
     @Override
     public boolean userLogout(HttpServletRequest request) {
         //1.先判断是否已登录
@@ -251,6 +256,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
         return true;
     }
+/**
+ * @description  是否为管理员
+ * @author RQ
+ * @date 2025/6/13 下午3:41
+ */
+@Override
+public boolean isAdmin(User user) {
+    // 使用短路与运算保证空指针安全
+    return user != null
+            && UserRoleEnum.ADMIN.getValue()  // 获取管理员角色标识
+            .equals(user.getUserRole());  // 比对用户角色字段
+}
+
 
 }
 

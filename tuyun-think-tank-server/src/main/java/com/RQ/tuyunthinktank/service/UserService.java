@@ -88,4 +88,12 @@ public interface UserService extends IService<User> {
      * @date: 2025/6/1 下午3:32
      */
     boolean userLogout(HttpServletRequest request);
+
+/**
+ * @description  判断是否为管理员
+ * @return: boolean
+ * @author RQ
+ * @date 2025/6/13 下午3:06
+ */
+    boolean isAdmin(User user);
 }
