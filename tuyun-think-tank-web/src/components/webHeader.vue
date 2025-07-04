@@ -63,6 +63,12 @@ const originItems = [
     title: '用户管理',
   },
   {
+    key: '/add_picture',
+    label: '新建图片',
+    title: '新建图片',
+  }
+,
+  {
     key: 'others',
     label: h('a', { href: 'https://github.com/rich0807', target: '_blank' }, '关于赚钱'),
     title: '关于赚钱',

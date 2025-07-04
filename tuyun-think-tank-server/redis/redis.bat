@@ -1,0 +1,19 @@
+@echo off
+REM 进入Redis实际安装目录（根据你的安装路径）
+cd /d D:\Major\Project\Redis-x64-3.2.100
+if errorlevel 1 (
+    echo [错误] Redis目录不存在或路径错误，请检查安装路径
+    pause
+    exit /b 1
+)
+
+REM 启动Redis服务
+redis-server.exe redis.windows.conf
+if errorlevel 1 (
+    echo [错误] Redis服务启动失败，请检查配置文件
+    pause
+    exit /b 1
+)
+
+REM 保持窗口打开（可选）
+pause
