@@ -4,6 +4,7 @@ import UserLoginView from '@/views/user/UserLoginView.vue'
 import UserRegisterView from '@/views/user/UserRegisterView.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import AddPictureView from '@/views/Picture/AddPictureView.vue'
+import PictureManageVewPage from '@/views/Picture/PictureManageVewPage.vue'
 /**
  * 路由配置
  */
@@ -15,6 +16,11 @@ const router = createRouter({
     name: '主页',
     component: HomeView,
   },
+    {
+      path: '/add_picture',
+      name: '新建图片',
+      component: AddPictureView,
+    },
   {
     path: '/user/login',
     name: '用户登录',
@@ -25,16 +31,20 @@ const router = createRouter({
     name: '用户注册',
     component: UserRegisterView,
   },
+
+
   {
     path: '/admin/userManage',
     name: '用户管理',
     component: UserManageView,
   },
-    {
-      path: '/add_picture',
-      name: '新建图片',
-      component: AddPictureView,
-    },
+  {
+    path: '/admin/pictureManage',
+    name: '图片管理',
+    component: PictureManageVewPage, // 需要确认该组件是否存在
+  }
+
+   ,
   {
       path: '/about',
       name: '关于',

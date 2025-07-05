@@ -58,16 +58,23 @@ const originItems = [
     title: '主页',
   },
   {
+    key: '/add_picture',
+    label: '新建图片',
+    title: '新建图片',
+  }
+  ,
+  {
     key: '/admin/userManage',
     label: '用户管理',
     title: '用户管理',
   },
   {
-    key: '/add_picture',
-    label: '新建图片',
-    title: '新建图片',
+    key: '/admin/pictureManage',
+    label: '图片管理',
+    title: '图片管理',
   }
-,
+  ,
+
   {
     key: 'others',
     label: h('a', { href: 'https://github.com/rich0807', target: '_blank' }, '关于赚钱'),

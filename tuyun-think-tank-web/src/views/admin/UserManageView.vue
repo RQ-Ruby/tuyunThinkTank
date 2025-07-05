@@ -265,3 +265,75 @@ const doDelete = async (id: number) => {
 
 
 </script>
+
+<style scoped>
+#userManagePage {
+  padding: 24px;
+}
+
+/* 搜索表单优化 */
+.ant-form-inline {
+  gap: 16px !important;
+  margin-bottom: 24px;
+}
+
+.ant-form-item :deep() {
+  margin-bottom: 0;
+}
+
+/* 表格优化 */
+.ant-table :deep(){
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ant-table-tbody > tr:nth-child(even) {
+  background: #f8fbff;
+}
+
+.ant-table-cell :deep() {
+  padding: 12px 16px !important;
+}
+
+/* 角色标签 */
+:deep(.ant-tag :deep())  {
+  border: none !important;
+  font-weight: 500;
+}
+
+:deep(.ant-tag[color='blue'] :deep()) {
+  background: linear-gradient(145deg, #4096ff, #1677ff);
+  color: white;
+}
+
+:deep(.ant-tag[color='red'] :deep()) {
+  background: linear-gradient(145deg, #ff4d4f, #cf1322);
+  color: white;
+}
+
+/* 修复transition属性缺少时间参数的问题 */
+:deep(.ant-btn :deep()) {
+  transition: all 0.2s ease-in-out;
+}
+
+.ant-btn-primary:hover  :deep(){
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+}
+
+.ant-btn-danger:hover :deep(){
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.4);
+}
+
+/* 编辑弹窗优化 */
+.ant-modal-body :deep(){
+  padding: 24px !important;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+}
+</style>

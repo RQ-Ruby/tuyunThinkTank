@@ -43,9 +43,15 @@
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
 import { onMounted, reactive, ref } from 'vue'
+// 正确导入语句应为：
 import { useRoute, useRouter } from 'vue-router'
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
+
+// 正确初始化路由实例
+const route = useRoute()
+const router = useRouter()
+
 /*
  * 表单数据
  */
@@ -69,8 +75,8 @@ const onSuccess = (newPicture: API.PictureVO) => {
 /**
  * 路由跳转组件
  */
-//useRouter 是一个钩子函数，用于在组件中获取路由对象，管理页面跳转、参数传递等导航功能
-const router = useRouter()
+//pictureouter 是一个钩子函数，用于在组件中获取路由对象，管理页面跳转、参数传递等导航功能
+
 
 /**
  * 提交表单
@@ -88,7 +94,7 @@ const handleSubmit = async (values: any) => {
   //await：等待异步操作，暂停当前代码执行，等待服务器返回结果，避免页面卡死。
   const res = await editPictureUsingPost({
     id: pictureId,
-    //...values → 用户填写的表单数据（如新标题、描述等），... 是展开运算符，表示合并所有字段
+    //...values → 图片填写的表单数据（如新标题、描述等），... 是展开运算符，表示合并所有字段
     ...values,
   })
   if (res.data.code === 0 && res.data.data) {
@@ -132,7 +138,6 @@ onMounted(() => {
   //在页面加载时获取标签和分类选项
   getTagCategoryOptions()
 })
-const route = useRoute()
 
 // 获取老数据
 const getOldPicture = async () => {
