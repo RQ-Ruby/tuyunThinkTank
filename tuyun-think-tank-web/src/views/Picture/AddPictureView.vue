@@ -130,7 +130,7 @@ const getTagCategoryOptions = async () => {
     })
 
   } else {
-    message.error('加载选项失败，' + res.data.message)
+    message.error('加载选项失败' + res.data.message)
   }
 }
 //钩子函数：在组件挂载后执行
@@ -165,8 +165,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-#pictureUpload {
-}
 
 #addPicturePage {
   background: linear-gradient(145deg, #e0f2f1 0%, #b2dfdb 100%) url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="none" stroke="%23b2dfdb" stroke-width="2" stroke-dasharray="4 6" /></svg>');
@@ -184,27 +182,6 @@ h2 {
   text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
-:deep(.ant-input),
-:deep(.ant-select-selector),
-:deep(.ant-input-affix-wrapper) {
-  border: 1px solid #8ab7b5 !important;
-  background: rgba(255,255,255,0.9) !important;
-  border-radius: 8px !important;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(42,121,121,0.1) !important;
-}
-
-:deep(.ant-btn-primary) {
-  background: linear-gradient(45deg, #2a7979, #3a9e8d) !important;
-  border: none !important;
-  border-radius: 24px !important;
-  box-shadow: 0 4px 12px rgba(42,121,121,0.3), 0 2px 6px rgba(0,0,0,0.1) !important;
-  transition: all 0.3s ease !important;
-}
-
-:deep(.ant-btn-primary):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(42,121,121,0.4) !important;
-}
 #addPicturePage {
   max-width: 720px;
   margin: 0 auto;
