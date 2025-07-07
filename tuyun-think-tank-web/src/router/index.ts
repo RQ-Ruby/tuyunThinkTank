@@ -4,7 +4,8 @@ import UserLoginView from '@/views/user/UserLoginView.vue'
 import UserRegisterView from '@/views/user/UserRegisterView.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import AddPictureView from '@/views/Picture/AddPictureView.vue'
-import PictureManageVewPage from '@/views/Picture/PictureManageVewPage.vue'
+import PictureManageVewView from '@/views/Picture/PictureManageVewView.vue'
+import PictureInformationView from '@/views/Picture/PictureInformationView.vue'
 /**
  * 路由配置
  */
@@ -41,8 +42,14 @@ const router = createRouter({
   {
     path: '/admin/pictureManage',
     name: '图片管理',
-    component: PictureManageVewPage, // 需要确认该组件是否存在
-  }
+    component: PictureManageVewView, // 需要确认该组件是否存在
+  },
+    {
+      path: '/picture/:id',
+      name: '图片详情',
+      component: PictureInformationView,
+      props: true,
+    }
 
    ,
   {
