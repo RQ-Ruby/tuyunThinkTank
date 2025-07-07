@@ -1,29 +1,33 @@
 <template>
   <div id="basicLayout">
     <a-layout style="min-height: 100vh">
-      <a-layout-header class="header"><web-header/></a-layout-header>
+      <!-- 当 hideLayout 为 true 时隐藏 header -->
+      <a-layout-header v-if="!hideLayout" class="header">
+        <web-header/>
+      </a-layout-header>
+
+      <!-- 内容区域始终显示 -->
       <a-layout-content class="content">
         <router-view />
       </a-layout-content>
 
-      <a-layout-footer>
-        <a-layout-footer class="footer">
-          © 2025 图云智库
-          关注我：<a href="https://github.com/rich0807" target="_blank">
-          芮七
-          </a>
-        </a-layout-footer>
-
+      <!-- 当 hideLayout 为 true 时隐藏 footer -->
+      <a-layout-footer v-if="!hideLayout" class="footer">
+        © 2025 图云智库
+        关注我：<a href="https://github.com/rich0807" target="_blank">芮七</a>
       </a-layout-footer>
     </a-layout>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
+import { computed } from 'vue'
 import WebHeader from '@/components/webHeader.vue'
+
+const route = useRoute()
+const hideLayout = computed(() => route.meta.hideLayout)
 </script>
-
-
 
 <style scoped>
 #basicLayout .header {

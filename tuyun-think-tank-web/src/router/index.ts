@@ -26,11 +26,13 @@ const router = createRouter({
     path: '/user/login',
     name: '用户登录',
     component: UserLoginView,
+    meta: { hideLayout: true }
   },
   {
     path: '/user/register',
     name: '用户注册',
     component: UserRegisterView,
+    meta: { hideLayout: true }
   },
 
 
@@ -42,7 +44,7 @@ const router = createRouter({
   {
     path: '/admin/pictureManage',
     name: '图片管理',
-    component: PictureManageVewView, // 需要确认该组件是否存在
+    component: PictureManageVewView,
   },
     {
       path: '/picture/:id',
