@@ -1,8 +1,11 @@
 <template>
-  <div id="basicLayout">
+  <div v-if="hideLayout">
+    <router-view />
+  </div>
+  <div id="basicLayout" v-if="!hideLayout">
     <a-layout style="min-height: 100vh">
       <!-- 当 hideLayout 为 true 时隐藏 header -->
-      <a-layout-header v-if="!hideLayout" class="header">
+      <a-layout-header class="header">
         <web-header/>
       </a-layout-header>
 
@@ -12,7 +15,7 @@
       </a-layout-content>
 
       <!-- 当 hideLayout 为 true 时隐藏 footer -->
-      <a-layout-footer v-if="!hideLayout" class="footer">
+      <a-layout-footer  class="footer">
         © 2025 图云智库
         关注我：<a href="https://github.com/rich0807" target="_blank">芮七</a>
       </a-layout-footer>
