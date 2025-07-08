@@ -181,9 +181,7 @@ public class PictureController {
      * @date 2025/6/13 下午6:16
      */
     @PostMapping("/list/page/vo")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE) // 添加权限控制
-    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
-                                                             HttpServletRequest request) {
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest) { // 移除 request 参数
         // 参数校验（增强健壮性）
         ThrowUtils.throwIf(pictureQueryRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");
         long current = pictureQueryRequest.getCurrent();
@@ -194,9 +192,10 @@ public class PictureController {
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
         // 获取脱敏数据（包含关联用户信息）
-        Page<PictureVO> voPage = pictureService.getPictureVOPage(picturePage, request);
+        Page<PictureVO> voPage = pictureService.getPictureVOPage(picturePage);
 
-        log.info("图片分页查询成功 操作者:{} 当前页:{}", userService.getLoginUser(request).getId(), current);
+        // 修改日志记录方式（移除登录用户依赖）
+        log.info("图片分页查询成功 当前页:{}", current);
         return ResultUtils.success(voPage);
     }
 

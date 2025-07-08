@@ -38,7 +38,17 @@ router.beforeEach(async (to, from, next) => {
 
   // 4. 获取目标路由完整路径
   const targetPath = to.fullPath
+// 需要登录的路径配置
+  const authPaths = ['/add_picture', '/admin'];
 
+  // 精确匹配需要登录的路径
+  if (authPaths.some(path => to.path === path)) {
+    if (!loginUser?.id) {
+      message.warning('请先登录');
+      next(`/user/login?redirect=${to.fullPath}`);
+      return;
+    }
+  }
   /*
    * 5. 管理员路由权限校验
    * - 匹配所有/admin开头的路径

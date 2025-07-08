@@ -54,5 +54,5 @@ public interface PictureService extends IService<Picture> {
  * @author RQ
  * @date 2025/6/13 下午5:37
  */
-    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
 }

@@ -21,6 +21,7 @@ const router = createRouter({
       path: '/add_picture',
       name: '新建图片',
       component: AddPictureView,
+      meta: { requiresAuth: true } // 新增元信息标识
     },
   {
     path: '/user/login',
