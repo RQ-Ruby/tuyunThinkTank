@@ -1,6 +1,7 @@
 package com.RQ.tuyunthinktank.service;
 
 import com.RQ.tuyunthinktank.model.dto.picture.PictureQueryRequest;
+import com.RQ.tuyunthinktank.model.dto.picture.PictureReviewRequest;
 import com.RQ.tuyunthinktank.model.dto.picture.PictureUploadRequest;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.model.entity.User;
@@ -55,4 +56,22 @@ public interface PictureService extends IService<Picture> {
  * @date 2025/6/13 下午5:37
  */
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
+
+    /**
+     * @description 图片审核
+     * @return: void
+     * @author RQ
+     * @date: 2025/7/8 上午10:01
+     */
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    /**
+     * @description 设置审核状态
+     * @author RQ
+     * @date 2025/7/9 下午2:01
+     */
+    //设置审核状态
+    void setPictureReviewStatus(Picture picture, User loginUser);
+
+
 }

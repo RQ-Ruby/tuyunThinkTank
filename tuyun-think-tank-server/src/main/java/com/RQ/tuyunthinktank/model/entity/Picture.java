@@ -95,7 +95,29 @@ public class Picture {
     //逻辑删除注解
     @TableLogic
     private Integer isDelete;
-//    序列化版本号，防止反序列化时出现错误
+
+    /**
+     * 状态：0-待审核; 1-通过; 2-拒绝
+     */
+    private Integer reviewStatus;
+
+    /**
+     * 审核信息
+     */
+    private String reviewMessage;
+
+    /**
+     * 审核人 id
+     */
+    private Long reviewerId;
+
+    /**
+     * 审核时间
+     */
+    private Date reviewTime;
+
+
+    //    序列化版本号，防止反序列化时出现错误
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

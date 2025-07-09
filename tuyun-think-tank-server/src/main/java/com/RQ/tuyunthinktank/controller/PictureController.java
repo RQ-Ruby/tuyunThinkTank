@@ -9,12 +9,10 @@ import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureEditRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureQueryRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureUpdateRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureUploadRequest;
+import com.RQ.tuyunthinktank.model.dto.picture.*;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.model.entity.User;
+import com.RQ.tuyunthinktank.model.enums.PictureReviewStatusEnum;
 import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.PictureTagCategory;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
@@ -119,7 +117,9 @@ public class PictureController {
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
 
         pictureService.validPicture(picture);
-        // 5. 执行更新操作
+        //4.补充审核参数
+        pictureService.setPictureReviewStatus(picture,loginUser);
+        // 6. 执行更新操作
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
 
@@ -188,6 +188,9 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         ThrowUtils.throwIf(current <= 0 || size <= 0, ErrorCode.PARAMS_ERROR, "分页参数错误");
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR, "单页数量不能超过20");
+        // 普通用户默认只能查看已过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -226,11 +229,30 @@ public class PictureController {
                         !UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole()),
                 ErrorCode.NO_AUTH_ERROR);
         pictureService.validPicture(picture);
-        // 4. 操作数据库
+        //4.补充审核参数
+      pictureService.setPictureReviewStatus(picture,loginUser);
+        // 5. 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
 
         log.info("图片编辑成功 ID:{} 操作者:{}", picture.getId(), loginUser.getId());
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * @description 图片审核
+     * @author RQ
+     * @date 2025/7/8 上午10:15
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null || pictureReviewRequest.getId() <= 0,
+                ErrorCode.PARAMS_ERROR, "请求参数非法");
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+
         return ResultUtils.success(true);
     }
 
