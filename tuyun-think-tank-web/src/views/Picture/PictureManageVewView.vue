@@ -27,6 +27,15 @@
           allow-clear
         />
       </a-form-item>
+      <a-form-item label="审核状态" name="tags">
+        <a-select
+          v-model:value="searchParams.reviewStatus"
+          :options="PIC_REVIEW_STATUS_OPTIONS"
+          placeholder="请选择审核状态"
+          style="min-width: 180px"
+          allow-clear
+        />
+      </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
       </a-form-item>
@@ -66,6 +75,12 @@
           <div>宽高比：{{ record.picScale }}</div>
           <div>大小：{{ (record.picSize / 1024).toFixed(2) }}KB</div>
         </template>
+        <!-- 审核信息 -->
+        <template v-if="column.dataIndex === 'reviewInfo'">
+          <div>审核状态：{{ PIC_REVIEW_STATUS_MAP[record.reviewStatus] }}</div>
+          <div>审核人：{{ record.reviewer }}</div>
+          <div v-if="record.reviewTime!=null">审核时间：{{  dayjs(record.reviewTime).format('YYYY-MM-DD HH:mm:ss')}}</div>
+        </template>
         <template v-else-if="column.dataIndex === 'createTime'">
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
@@ -73,8 +88,10 @@
           <!--dayjs()	调用 Day.js 库，将时间数据转换为可操作对象（支持时间戳、ISO 字符串等格式）          -->
           {{ dayjs(record.editTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
+        <template v-else-if="column.key === 'action'" >
+          <a-space wrap>
+            <a-button type="link" @click="doReview(record,PIC_REVIEW_STATUS_ENUM.PASS)" v-if="record.reviewStatus!=PIC_REVIEW_STATUS_ENUM.PASS">通过</a-button>
+            <a-button type="link" danger @click="doReview(record,PIC_REVIEW_STATUS_ENUM.REJECT)" v-if="record.reviewStatus!=PIC_REVIEW_STATUS_ENUM.REJECT">拒绝</a-button>
             <a-button type="link" :href="`/add_picture?id=${record.id}`" target="_blank">编辑</a-button>
             <a-button type="link" danger @click="doDelete(record.id)">删除</a-button>
           </a-space>
@@ -91,11 +108,12 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {
-  deletePictureUsingPost,
+  deletePictureUsingPost, doPictureReviewUsingPost,
   getPictureVoByIdUsingGet,
   listPictureByPageUsingPost,
-  updatePictureUsingPost,
+  updatePictureUsingPost
 } from '@/api/pictureController'
+import { PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_MAP, PIC_REVIEW_STATUS_OPTIONS } from '@/contants/picyure'
 
 // 表格列定义
 const columns = [
@@ -128,6 +146,10 @@ const columns = [
   {
     title: '图片信息',
     dataIndex: 'picInfo',
+  },
+  {
+    title: '审核信息',
+    dataIndex: 'reviewInfo'
   },
   {
     title: '用户 id',
@@ -219,6 +241,22 @@ const doDelete = async (id: number) => {
   }
 
 }
+const doReview = async (record: API.Picture, reviewStatus: number) => {
+  const reviewMessage = reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS ? '审核通过' : '审核拒绝'
+  const res = await doPictureReviewUsingPost({
+    id: record.id,
+    reviewStatus,
+    reviewMessage,
+  })
+  if (res.data.code === 0) {
+    message.success('审核操作成功')
+    // 重新获取列表
+    fetchData()
+  } else {
+    message.error('审核操作失败，' + res.data.message)
+  }
+}
+
 
 </script>
 
@@ -257,3 +295,80 @@ h2 {
   width: 100%;
 }
 </style>
+
+// 在模板末尾添加模态框
+<template>
+  <!-- 原有表格代码... -->
+
+  <!-- 新增审核原因对话框 -->
+  <a-modal
+    v-model:open="open"
+    title="审核拒绝原因"
+    @ok="handleReviewConfirm"
+    @cancel="handleReviewCancel"
+  >
+    <a-textarea
+      v-model:value="reviewMessage"
+      placeholder="请输入拒绝原因"
+      :auto-size="{ minRows: 3, maxRows: 5 }"
+    />
+  </a-modal>
+</template>
+
+// 在script setup部分添加以下代码
+<script lang="ts" setup>
+import { ref } from 'vue'
+
+const open = ref(false)
+const reviewMessage = ref('')
+const reviewRecord = ref<API.Picture>()
+const pendingReviewStatus = ref<number>()
+
+// 打开审核对话框
+const openReviewModal = (record: API.Picture, status: number) => {
+  reviewRecord.value = record
+  pendingReviewStatus.value = status
+  open.value = true
+}
+
+// 确认审核
+const handleReviewConfirm = async () => {
+  if (!reviewRecord.value?.id || !pendingReviewStatus.value) return
+
+  try {
+    const res = await doPictureReviewUsingPost({
+      id: reviewRecord.value.id,
+      reviewStatus: pendingReviewStatus.value,
+      reviewMessage: reviewMessage.value || '审核拒绝' // 使用输入内容或默认文案
+    })
+
+    if (res.data.code === 0) {
+      message.success('审核操作成功')
+      await fetchData()
+      open.value = false
+      reviewMessage.value = '' // 清空输入
+    }
+  } catch (e) {
+    message.error('审核操作失败')
+  }
+}
+
+// 取消审核
+const handleReviewCancel = () => {
+  open.value = false
+  reviewMessage.value = ''
+}
+</script>
+
+// 修改操作按钮部分
+<template #bodyCell="{ column, record }">
+  <!-- 原有通过按钮保持不变 -->
+  <a-button
+    type="link"
+    danger
+    @click="openReviewModal(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
+    v-if="record.reviewStatus!=PIC_REVIEW_STATUS_ENUM.REJECT"
+  >
+    拒绝
+  </a-button>
+</template>

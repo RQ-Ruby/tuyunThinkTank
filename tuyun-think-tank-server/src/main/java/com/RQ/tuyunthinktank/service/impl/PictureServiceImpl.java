@@ -288,11 +288,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             ThrowUtils.throwIf(!oldpicture.getReviewMessage().equals(reviewMessage), ErrorCode.PARAMS_ERROR, "请勿重复审核");
         }
         //4.更新数据
-        Picture picture = new Picture();
-        BeanUtils.copyProperties(oldpicture, picture);
-        picture.setUserId(loginUser.getId());
-        picture.setUpdateTime(date());
-        boolean b = this.updateById(picture);
+        Picture updatpicture = new Picture();
+        BeanUtils.copyProperties(pictureReviewRequest, updatpicture);
+        updatpicture.setUserId(loginUser.getId());
+        updatpicture.setUpdateTime(date());
+        boolean b = this.updateById(updatpicture);
             ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR, "审核失败");
 
     }

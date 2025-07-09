@@ -65,6 +65,24 @@
               <template #icon><DeleteOutlined class="btn-icon" /></template>
               删除
             </a-button>
+            <!-- 新增管理员审核按钮 -->
+<!--            <a-button
+              v-if="isAdmin"
+              type="primary"
+              ghost
+              @click="doReview(PIC_REVIEW_STATUS_ENUM.PASS)"
+              class="action-btn">
+              <template #icon><CheckOutlined class="btn-icon" /></template>
+              通过
+            </a-button>-->
+            <a-button
+              v-if="isAdmin"
+              danger
+              @click="doReview(PIC_REVIEW_STATUS_ENUM.REJECT)"
+              class="action-btn">
+              <template #icon><CloseOutlined class="btn-icon" /></template>
+              拒绝
+            </a-button>
           </a-space>
         </a-card>
       </a-col>
@@ -76,14 +94,37 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController'
+import { deletePictureUsingPost, doPictureReviewUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import router from '@/router'
 import { downloadImage, formatSize } from '@/util'
+import { PIC_REVIEW_STATUS_ENUM } from '@/contants/picyure'
 /*图片下载  */
 const doDownload = () => {
   downloadImage(picture.value.url)
+}
+//增管理员判断
+const isAdmin = computed(() => {
+  return loginUserStore.loginUser.userRole === 'admin'
+})
+
+// 审核方法
+const doReview = async (reviewStatus: number) => {
+  try {
+    const res = await doPictureReviewUsingPost({
+      id: picture.value.id,
+      reviewStatus,
+      reviewMessage: reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS ? '审核通过' : '审核拒绝'
+    })
+    if (res.data.code === 0) {
+      message.success(`已${reviewStatus === 1 ? '通过' : '拒绝'}审核`)
+      router.push('/')
+      fetchPictureDetail() // 刷新详情数据
+    }
+  } catch (e) {
+    message.error('审核操作失败')
+  }
 }
 
 
@@ -247,5 +288,15 @@ a-tag {
   margin: 4px;
 }
 
+
+/* 在现有action-btn样式中新增*/
+.action-btn.ant-btn-primary[ghost] {
+  background: rgba(24, 144, 255, 0.1);
+  border-color: #1890ff;
+}
+
+.action-btn.ant-btn-danger {
+  background: rgba(255, 77, 79, 0.1);
+}
 
 </style>
