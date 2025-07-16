@@ -67,7 +67,12 @@
 
   <!-- 编辑用户弹窗 -->
   <!-- 在表格下方添加编辑模态框 -->
-  <a-modal v-model:visible="visible" title="编辑用户" >
+  <a-modal
+    v-model:open="visible"
+    title="编辑用户"
+    @ok="handleUpdate"
+>
+
     <a-form :model="updateForm" layout="vertical">
       <a-form-item label="用户名">
         <a-input v-model:value="updateForm.userName" placeholder="请输入用户名" />

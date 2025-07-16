@@ -13,7 +13,10 @@ public class PictureUploadRequest implements Serializable {
      * @author RQ
      * @date: 2025/6/9 下午5:41
      */
-    private Long id;  
+    private Long id;
+
+    //文件地址
+    private  String url;
   
     private static final long serialVersionUID = 1L;  
 }

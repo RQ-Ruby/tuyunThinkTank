@@ -3,7 +3,9 @@ server:
   servlet:
     context-path: /api
 spring:
-#设置上传文件的大小(Spring默认为1MB)
+  profiles:
+    active: local
+  #设置上传文件的大小(Spring默认为1MB)
   servlet:
     multipart:
       max-file-size: 10MB

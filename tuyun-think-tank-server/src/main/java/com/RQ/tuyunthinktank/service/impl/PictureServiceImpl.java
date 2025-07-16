@@ -6,6 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.manage.FileManage;
+import com.RQ.tuyunthinktank.manage.upload.FilePictureUpload;
+import com.RQ.tuyunthinktank.manage.upload.UrlPictureUpload;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.RQ.tuyunthinktank.model.dto.picture.PictureQueryRequest;
 import com.RQ.tuyunthinktank.model.dto.picture.PictureReviewRequest;
@@ -47,6 +49,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private FileManage fileManage;
     @Resource
     private UserService userService;
+    @Resource
+    private FilePictureUpload filePictureUpload;
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
 
     /**
      * @description 校验图片信息
@@ -82,7 +88,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
  * @date 2025/6/13 下午3:51
  */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
         //1.判断用户是否登录
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         //2.初始化id,用于判断是更新还是新增
@@ -99,11 +105,19 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         //4.按照用户id划分目录
         String originalFilename = String.format("public/%s", loginUser.getId());
-        UploadPictureResult uploadPictureResult = fileManage.uploadFile(multipartFile, originalFilename);
+        //5.上传图片
+        UploadPictureResult uploadPictureResult = null;
+        if (multipartFile instanceof MultipartFile) {
+              uploadPictureResult=filePictureUpload.uploadPicture(multipartFile, originalFilename);
+        } else if (multipartFile instanceof String) {
+             uploadPictureResult =  urlPictureUpload.uploadPicture(multipartFile, originalFilename);
+        } else {
+            ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "上传文件类型错误");
+        }
 
-        //5.构造要入库的图片信息
+        //6.构造要入库的图片信息
         Picture picture = getPic(loginUser, uploadPictureResult, id);
-        //6.设置审核状态
+        //7.设置审核状态
         setPictureReviewStatus(picture, loginUser);
         boolean result = this.saveOrUpdate(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片上传失败");

@@ -296,79 +296,8 @@ h2 {
 }
 </style>
 
-// 在模板末尾添加模态框
-<template>
-  <!-- 原有表格代码... -->
 
-  <!-- 新增审核原因对话框 -->
-  <a-modal
-    v-model:open="open"
-    title="审核拒绝原因"
-    @ok="handleReviewConfirm"
-    @cancel="handleReviewCancel"
-  >
-    <a-textarea
-      v-model:value="reviewMessage"
-      placeholder="请输入拒绝原因"
-      :auto-size="{ minRows: 3, maxRows: 5 }"
-    />
-  </a-modal>
-</template>
 
-// 在script setup部分添加以下代码
-<script lang="ts" setup>
-import { ref } from 'vue'
 
-const open = ref(false)
-const reviewMessage = ref('')
-const reviewRecord = ref<API.Picture>()
-const pendingReviewStatus = ref<number>()
 
-// 打开审核对话框
-const openReviewModal = (record: API.Picture, status: number) => {
-  reviewRecord.value = record
-  pendingReviewStatus.value = status
-  open.value = true
-}
 
-// 确认审核
-const handleReviewConfirm = async () => {
-  if (!reviewRecord.value?.id || !pendingReviewStatus.value) return
-
-  try {
-    const res = await doPictureReviewUsingPost({
-      id: reviewRecord.value.id,
-      reviewStatus: pendingReviewStatus.value,
-      reviewMessage: reviewMessage.value || '审核拒绝' // 使用输入内容或默认文案
-    })
-
-    if (res.data.code === 0) {
-      message.success('审核操作成功')
-      await fetchData()
-      open.value = false
-      reviewMessage.value = '' // 清空输入
-    }
-  } catch (e) {
-    message.error('审核操作失败')
-  }
-}
-
-// 取消审核
-const handleReviewCancel = () => {
-  open.value = false
-  reviewMessage.value = ''
-}
-</script>
-
-// 修改操作按钮部分
-<template #bodyCell="{ column, record }">
-  <!-- 原有通过按钮保持不变 -->
-  <a-button
-    type="link"
-    danger
-    @click="openReviewModal(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
-    v-if="record.reviewStatus!=PIC_REVIEW_STATUS_ENUM.REJECT"
-  >
-    拒绝
-  </a-button>
-</template>

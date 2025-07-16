@@ -36,6 +36,8 @@ import java.util.Set;
  */
 @Component
 @Slf4j
+//@Deprecated  已弃用
+@Deprecated
 public class FileManage {
 
     @Resource

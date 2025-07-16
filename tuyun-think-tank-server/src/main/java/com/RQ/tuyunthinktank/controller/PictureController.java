@@ -45,6 +45,20 @@ public class PictureController {
     @Resource
     private UserService userService;
 
+    /**
+     * @description 图片上传（URL）
+     * @author RQ
+     * @date 2025/7/11 下午7:38
+     */
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(
+            @RequestBody PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = pictureUploadRequest.getUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
 
     /**
      * @description 图片上传
@@ -118,7 +132,7 @@ public class PictureController {
 
         pictureService.validPicture(picture);
         //4.补充审核参数
-        pictureService.setPictureReviewStatus(picture,loginUser);
+        pictureService.setPictureReviewStatus(picture, loginUser);
         // 6. 执行更新操作
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
@@ -230,7 +244,7 @@ public class PictureController {
                 ErrorCode.NO_AUTH_ERROR);
         pictureService.validPicture(picture);
         //4.补充审核参数
-      pictureService.setPictureReviewStatus(picture,loginUser);
+        pictureService.setPictureReviewStatus(picture, loginUser);
         // 5. 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
