@@ -3,15 +3,14 @@ package com.RQ.tuyunthinktank.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.manage.FileManage;
 import com.RQ.tuyunthinktank.manage.upload.FilePictureUpload;
 import com.RQ.tuyunthinktank.manage.upload.UrlPictureUpload;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureQueryRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureReviewRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureUploadRequest;
+import com.RQ.tuyunthinktank.model.dto.picture.*;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.PictureReviewStatusEnum;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
@@ -22,16 +21,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.mapper.PictureMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateUtil.date;
@@ -41,6 +43,7 @@ import static cn.hutool.core.date.DateUtil.date;
  * @description 针对表【picture(图片)】的数据库操作Service实现
  * @createDate 2025-06-08 21:53:08
  */
+@Slf4j
 @Service
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         implements PictureService {
@@ -117,6 +120,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         //6.构造要入库的图片信息
         Picture picture = getPic(loginUser, uploadPictureResult, id);
+
+        String picName = uploadPictureResult.getPicName();
+        if (StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
+            picName = pictureUploadRequest.getPicName();
+        }
+
+        picture.setName(picName);
         //7.设置审核状态
         setPictureReviewStatus(picture, loginUser);
         boolean result = this.saveOrUpdate(picture);
@@ -134,7 +144,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private static Picture getPic(User loginUser, UploadPictureResult uploadPictureResult, Long id) {
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
-        picture.setName(uploadPictureResult.getPicName());
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
         picture.setPicHeight(uploadPictureResult.getPicHeight());
@@ -326,6 +335,88 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
            picture.setReviewStatus(PictureReviewStatusEnum. REVIEWING.getValue());
 
        }
+    }
+/**
+ * @return
+ * @description 批量抓取图片
+ * @author RQ
+ * @date 2025/7/17 上午9:14
+ */
+    @Override
+    public int doPictureBatchUpload(PictureByBatchRequest pictureByBatchRequest, User loginUser) {
+        //判断数据是否存在
+        String searchText = pictureByBatchRequest.getSearchText();
+        Integer count = pictureByBatchRequest.getCount();
+        String picName = pictureByBatchRequest.getPicName();
+        // 名称前缀默认是searchText
+        if(StrUtil.isBlank(picName)){
+            picName=searchText;
+        }
+        ThrowUtils.throwIf(StrUtil.isBlank(searchText), ErrorCode.PARAMS_ERROR, "搜索词不能为空");
+        ThrowUtils.throwIf(count == null || count <= 0, ErrorCode.PARAMS_ERROR, "抓取数量不能为空");
+       //抓取数量不能超过30
+        ThrowUtils.throwIf(count > 30, ErrorCode.PARAMS_ERROR, "抓取数量不能超过30");
+        //构建url
+        String fetchUrl = "https://cn.bing.com/images/async?q="+searchText+"&mmasync=1";
+        //进行链接
+        Document document;
+        try {
+            document = Jsoup.connect(fetchUrl).get();
+        } catch (IOException e) {
+            log.error("抓取图片失败", e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取页面失败");
+        }
+        // 定位包含图片的容器div（通过CSS选择器）
+        Element div = document.getElementsByClass("dgControl").first();
+        if (ObjUtil.isNull(div)) {  // 空指针防护
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取元素失败");
+        }
+
+        // 提取所有图片元素（选择class="mimg"的img标签）
+        Elements imgElementList = div.select("img.mimg");
+        if (CollUtil.isEmpty(imgElementList)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取元素失败");
+        }
+
+        // 遍历图片元素，提取图片URL
+        List<String> imgUrlList = new ArrayList<>();
+        int uploadCount=0;
+        for (Element imgElement : imgElementList) {
+            String imgUrl = imgElement.attr("src");
+            //判断url是否为空
+            if(StrUtil.isBlank(imgUrl)){
+                log.info("图片url为空,已跳过:{}",imgUrl);
+                continue;
+            }
+            imgUrlList.add(imgUrl);
+            //清楚url参数
+            imgUrl = imgUrl.split("\\?")[0];
+
+            PictureUploadRequest pictureUploadRequest = new PictureUploadRequest();
+            try {
+                pictureUploadRequest.setPicName(picName+uploadCount+1);
+                PictureVO pictureVO = this.uploadPicture(imgUrl, pictureUploadRequest, loginUser);
+                log.info("图片上传成功, id = {}", pictureVO.getId());
+                uploadCount++;  // 成功计数
+            } catch (Exception e) {
+                log.error("图片上传失败", e);  // 捕获具体异常但不中断流程
+                continue;
+            }
+            //判断是否上传成功
+            if(uploadCount>=count){
+                break;
+            }
+
+        }
+        // 打印所有图片URL
+        for (String imgUrl : imgUrlList) {
+            System.out.println(imgUrl);
+        }
+
+
+
+        return uploadCount;  // 返回实际成功数量
+
     }
 
 }

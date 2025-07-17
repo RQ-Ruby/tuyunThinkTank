@@ -270,6 +270,25 @@ public class PictureController {
         return ResultUtils.success(true);
     }
 
+
+    /**
+     * @description 抓取图片
+     * @author RQ
+     * @date 2025/7/17 上午9:43
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureBatch(@RequestBody PictureByBatchRequest pictureByBatchRequest,
+                                                HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureByBatchRequest == null || pictureByBatchRequest.getSearchText() == null,
+                ErrorCode.PARAMS_ERROR, "请求参数非法");
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureBatchUpload(pictureByBatchRequest, loginUser);
+
+        return ResultUtils.success(true);
+    }
+
+
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();

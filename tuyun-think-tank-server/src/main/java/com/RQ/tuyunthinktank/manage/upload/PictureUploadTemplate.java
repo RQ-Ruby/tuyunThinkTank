@@ -11,11 +11,13 @@ import com.RQ.tuyunthinktank.manage.SaveManage;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
+import com.RQ.tuyunthinktank.manage.upload.PictureUploadTemplate;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 /**
  * 图片上传模板类（使用模板方法模式）
@@ -45,6 +47,18 @@ public abstract class PictureUploadTemplate {
      * @return 标准化的上传结果
      * @throws BusinessException 上传失败时抛出业务异常
      */
+    // 定义 Windows 系统不允许的特殊字符正则表达式
+    private static final Pattern INVALID_FILE_NAME_CHARS = Pattern.compile("[<>:\"/\\\\|?*]");
+
+    /**
+     * 过滤文件名中的非法字符
+     * @param filename 原始文件名
+     * @return 过滤后的文件名
+     */
+    private String sanitizeFilename(String filename) {
+        return INVALID_FILE_NAME_CHARS.matcher(filename).replaceAll("");
+    }
+
     public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix) {
         // 1. 校验图片有效性（抽象方法）
         validPicture(inputSource);
@@ -52,6 +66,8 @@ public abstract class PictureUploadTemplate {
         // 2. 生成唯一文件名：日期_uuid.后缀
         String uuid = RandomUtil.randomString(16);
         String originFilename = getOriginFilename(inputSource);
+        // 过滤原始文件名中的非法字符
+        originFilename = sanitizeFilename(originFilename);
         String uploadFilename = String.format("%s_%s.%s",
                 DateUtil.formatDate(new Date()),
                 uuid,
