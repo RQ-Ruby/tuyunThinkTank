@@ -153,6 +153,12 @@ declare namespace API {
     userId?: number
   }
 
+  type PictureByBatchRequest = {
+    count?: number
+    picName?: string
+    searchText?: string
+  }
+
   type PictureEditRequest = {
     category?: string
     id?: number
@@ -204,6 +210,7 @@ declare namespace API {
 
   type PictureUploadRequest = {
     id?: number
+    picName?: string
     url?: string
   }
 
@@ -228,6 +235,7 @@ declare namespace API {
 
   type uploadPictureUsingPOSTParams = {
     id?: number
+    picName?: string
     url?: string
   }
 

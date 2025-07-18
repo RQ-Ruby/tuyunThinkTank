@@ -6,6 +6,7 @@ import UserManageView from '@/views/admin/UserManageView.vue'
 import AddPictureView from '@/views/Picture/AddPictureView.vue'
 import PictureManageVewView from '@/views/Picture/PictureManageVewView.vue'
 import PictureInformationView from '@/views/Picture/PictureInformationView.vue'
+import AddPictureBatchView from '@/views/Picture/AddPictureBatchView.vue'
 /**
  * 路由配置
  */
@@ -21,6 +22,12 @@ const router = createRouter({
       path: '/add_picture',
       name: '新建图片',
       component: AddPictureView,
+      meta: { requiresAuth: true } // 新增元信息标识
+    },
+    {
+      path: '/add_picture/batch',
+      name: '批量创建图片',
+      component: AddPictureBatchView,
       meta: { requiresAuth: true } // 新增元信息标识
     },
   {
