@@ -1,5 +1,6 @@
 package com.RQ.tuyunthinktank.controller;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.RQ.tuyunthinktank.annotation.AuthCheck;
 import com.RQ.tuyunthinktank.common.BaseResponse;
@@ -19,9 +20,13 @@ import com.RQ.tuyunthinktank.model.vo.PictureVO;
 import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Authorization;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author RQ
@@ -44,7 +50,8 @@ public class PictureController {
     private PictureService pictureService;
     @Resource
     private UserService userService;
-
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
     /**
      * @description 图片上传（URL）
      * @author RQ
@@ -252,6 +259,21 @@ public class PictureController {
         log.info("图片编辑成功 ID:{} 操作者:{}", picture.getId(), loginUser.getId());
         return ResultUtils.success(true);
     }
+
+
+    /**
+     * @description 分页获取图片列表cache（封装类）
+     * @author RQ
+     * @date 2025/7/19 下午5:12
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                                      HttpServletRequest request) {
+        // 调用 Service 层方法
+        Page<PictureVO> pictureVOPage = pictureService.listPictureVOByPageWithCache(pictureQueryRequest, request);
+        return ResultUtils.success(pictureVOPage);
+    }
+
 
     /**
      * @description 图片审核

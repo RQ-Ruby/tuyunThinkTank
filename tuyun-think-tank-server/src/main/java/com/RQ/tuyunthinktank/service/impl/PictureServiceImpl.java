@@ -1,8 +1,13 @@
 package com.RQ.tuyunthinktank.service.impl;
 
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+
+import com.RQ.tuyunthinktank.common.LocalCacheManager;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
@@ -21,22 +26,27 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.mapper.PictureMapper;
+;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateUtil.date;
+
 
 /**
  * @author RQ
@@ -56,6 +66,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private FilePictureUpload filePictureUpload;
     @Resource
     private UrlPictureUpload urlPictureUpload;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private LocalCacheManager localCacheManager;
+
+
+
 
     /**
      * @description 校验图片信息
@@ -417,6 +434,61 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         return uploadCount;  // 返回实际成功数量
 
+    }
+/**
+ * @description 分页查询图片cache
+ * @author RQ
+ * @date 2025/7/19 下午5:28
+ */
+    @Override
+    public Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 普通用户默认只能查看已过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
+        // 构建缓存 key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cacheKey = "yupicture:listPictureVOByPage:" + hashKey;
+
+
+         // 1.先从性能高的本地缓存中查询
+        String cachedValue = localCacheManager.getIfPresent(cacheKey);
+        if (cachedValue != null) {
+            // 如果缓存命中，返回结果
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return cachedPage;
+        }
+
+        // 2.再从 Redis 缓存中查询
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+       cachedValue = valueOps.get(cacheKey);
+        if (cachedValue != null) {
+            // 如果缓存命中,更新本地缓存
+            localCacheManager.put(cacheKey, cachedValue);
+            // 如果缓存命中,返回结果
+            Page<PictureVO> redisPage = JSONUtil.toBean(cachedValue, Page.class);
+            return redisPage;
+        }
+        log.info("缓存未命中，开始查询数据库，cacheKey={}", cacheKey);
+        // 3.查询数据库
+        Page<Picture> picturePage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(pictureQueryRequest));
+        // 获取封装类
+        Page<PictureVO> pictureVOPage = this.getPictureVOPage(picturePage);
+        // 存入本地缓存
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+        localCacheManager.put(cacheKey, cacheValue);
+        // 存入 Redis 缓存
+        // 5 - 10 分钟随机过期，防止雪崩
+        int cacheExpireTime = 300 +  RandomUtil.randomInt(0, 300);
+        valueOps.set(cacheKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        // 返回结果
+        return pictureVOPage;
     }
 
 }

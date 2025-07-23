@@ -80,5 +80,10 @@ public interface PictureService extends IService<Picture> {
  */
     int doPictureBatchUpload(PictureByBatchRequest pictureByBatchRequest, User loginUser);
 
-
+/**
+ * @description 分页查询图片cache
+ * @author RQ
+ * @date 2025/7/19 下午5:28
+ */
+    Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
 }
