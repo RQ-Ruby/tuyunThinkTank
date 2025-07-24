@@ -1,5 +1,6 @@
 package com.RQ.tuyunthinktank.manage;
 
+import cn.hutool.core.io.FileUtil;
 import com.RQ.tuyunthinktank.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author RQ
@@ -76,6 +79,25 @@ public class SaveManage {
         PicOperations picOperations = new PicOperations();
         // 设置返回原图信息（1-返回，0-不返回）
         picOperations.setIsPicInfo(1);
+        //图像格式转换
+        /* 源于:https://cloud.tencent.com/document/product/436/113299*/
+        //创建图片处理规则
+        List<PicOperations.Rule> picOperationList = new ArrayList<>();
+        // 添加图片处理规则,将图片转换成webp格式
+        //生成新的文件名
+        String newKey = FileUtil.mainName(key) + ".webp";
+        // 添加图片处理规则,将图片转换成webp格式
+        PicOperations.Rule rule = new PicOperations.Rule();
+        rule.setRule("imageMogr2/format/webp");
+        //存储桶
+        rule.setBucket(cosClientConfig.getBucket());
+        // 设置新的文件名
+        rule.setFileId(newKey);
+        // 添加规则到列表
+        picOperationList.add(rule);
+        // 将规则列表绑定到图片处理配置
+        picOperations.setRules(picOperationList);
+
         // 3. 将图片处理配置加入上传请求
         putObjectRequest.setPicOperations(picOperations);
         // 4. 执行上传操作并返回结果

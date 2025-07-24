@@ -1,5 +1,6 @@
 package com.RQ.tuyunthinktank.manage.upload;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -10,13 +11,16 @@ import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.manage.SaveManage;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
 import com.RQ.tuyunthinktank.manage.upload.PictureUploadTemplate;
+import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -60,10 +64,10 @@ public abstract class PictureUploadTemplate {
     }
 
     public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix) {
-        // 1. 校验图片有效性（抽象方法）
+        //  校验图片有效性（抽象方法）
         validPicture(inputSource);
 
-        // 2. 生成唯一文件名：日期_uuid.后缀
+        //  生成唯一文件名：日期_uuid.后缀
         String uuid = RandomUtil.randomString(16);
         String originFilename = getOriginFilename(inputSource);
         // 过滤原始文件名中的非法字符
@@ -76,15 +80,22 @@ public abstract class PictureUploadTemplate {
 
         File tempFile = null;
         try {
-            // 3. 创建临时文件（用于中转）
+            //  创建临时文件（用于中转）
             tempFile = File.createTempFile(uploadPath, null);
 
-            // 4. 处理输入源→写入临时文件（抽象方法）
+            //  处理输入源→写入临时文件（抽象方法）
             processFile(inputSource, tempFile);
 
-            // 5. 上传到对象存储
+            //  上传到对象存储
             PutObjectResult putObjectResult = cosManager.putPicture(uploadPath, tempFile);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+            //获得处理后的图片信息
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if (CollUtil.isNotEmpty(objectList)) {
+                CIObject compressedCiObject = objectList.get(0);
+                return buildResult(originFilename, compressedCiObject);
+            }
 
             // 6. 构建标准化返回结果
             return buildResult(originFilename, tempFile, uploadPath, imageInfo);
@@ -96,6 +107,7 @@ public abstract class PictureUploadTemplate {
             deleteTempFile(tempFile);
         }
     }
+
 
     /**
      * 校验图片有效性（抽象方法）
@@ -123,6 +135,26 @@ public abstract class PictureUploadTemplate {
      * @throws Exception 处理失败时抛出异常
      */
     protected abstract void processFile(Object inputSource, File tempFile) throws Exception;
+
+    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject) {
+        UploadPictureResult result = new UploadPictureResult();
+        // 提取图片元信息
+        int width = compressedCiObject.getWidth();
+        int height = compressedCiObject.getHeight();
+        double scale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
+
+        // 封装返回数据
+        result.setPicName(FileUtil.mainName(originFilename));  // 不含后缀的文件名
+        result.setPicWidth(width);
+        result.setPicHeight(height);
+        result.setPicScale(scale);
+        result.setPicFormat(compressedCiObject.getFormat());
+        result.setPicSize(Long.valueOf(compressedCiObject.getSize()));
+        result.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());  // 完整访问URL
+
+        return result;
+    }
+
 
     /**
      * 构建标准化返回结果
