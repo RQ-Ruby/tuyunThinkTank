@@ -61,8 +61,9 @@
                   <img
                     style="height: 300px; object-fit: cover"
                     :alt="picture.name"
-                    :src="picture.url"
+                    :src="picture.thumbnailUrl ?? picture.url"
                   />
+
                   <div class="image-overlay">
                     <div class="meta-content">
                       <h4 class="title">{{ picture.name }}</h4>

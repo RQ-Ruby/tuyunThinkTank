@@ -86,7 +86,7 @@ public class SaveManage {
         // 添加图片处理规则,将图片转换成webp格式
         //生成新的文件名
         String newKey = FileUtil.mainName(key) + ".webp";
-        // 添加图片处理规则,将图片转换成webp格式
+        // 1.添加图片处理规则,将图片转换成webp格式
         PicOperations.Rule rule = new PicOperations.Rule();
         rule.setRule("imageMogr2/format/webp");
         //存储桶
@@ -97,6 +97,24 @@ public class SaveManage {
         picOperationList.add(rule);
         // 将规则列表绑定到图片处理配置
         picOperations.setRules(picOperationList);
+        /*源:https://cloud.tencent.com/document/product/436/55377*/
+        //仅对大于20KB的图片进行处理
+        // 2. 生成缩略图
+        // 缩略图处理，仅对 > 30 KB 的图片生成缩略图
+        if (file.length() > 30 * 1024) {
+            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+            thumbnailRule.setBucket(cosClientConfig.getBucket());
+            // 关键优化点1：强制使用WebP格式（减少30%体积，更清晰）
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail.webp";
+            thumbnailRule.setFileId(thumbnailKey);
+
+            // 关键优化点2：添加锐化+抗锯齿参数 | 优化缩放策略
+            String r = String.format(
+                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/webp/sharp/100", 400, 400
+            );
+            thumbnailRule.setRule(r);
+            picOperationList.add(thumbnailRule);
+        }
 
         // 3. 将图片处理配置加入上传请求
         putObjectRequest.setPicOperations(picOperations);

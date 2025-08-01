@@ -1,12 +1,9 @@
 package com.RQ.tuyunthinktank.service.impl;
-
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.RQ.tuyunthinktank.common.LocalCacheManager;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
@@ -26,7 +23,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.mapper.PictureMapper;
-;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -160,6 +156,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      */
     private static Picture getPic(User loginUser, UploadPictureResult uploadPictureResult, Long id) {
         Picture picture = new Picture();
+        // 构造要入库的图片信息
+        picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
+
         picture.setUrl(uploadPictureResult.getUrl());
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());

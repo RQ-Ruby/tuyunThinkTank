@@ -63,7 +63,8 @@ public abstract class PictureUploadTemplate {
         return INVALID_FILE_NAME_CHARS.matcher(filename).replaceAll("");
     }
 
-    public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix) {
+    public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix
+                                                   ) {
         //  校验图片有效性（抽象方法）
         validPicture(inputSource);
 
@@ -94,7 +95,12 @@ public abstract class PictureUploadTemplate {
             List<CIObject> objectList = processResults.getObjectList();
             if (CollUtil.isNotEmpty(objectList)) {
                 CIObject compressedCiObject = objectList.get(0);
-                return buildResult(originFilename, compressedCiObject);
+                CIObject thumbnailCiObject=compressedCiObject;
+                if (objectList.size() > 1) {
+                     thumbnailCiObject = objectList.get(1);
+
+                }
+                return buildResult(originFilename, compressedCiObject, thumbnailCiObject);
             }
 
             // 6. 构建标准化返回结果
@@ -136,7 +142,8 @@ public abstract class PictureUploadTemplate {
      */
     protected abstract void processFile(Object inputSource, File tempFile) throws Exception;
 
-    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject) {
+    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject
+            ,CIObject thumbnailCiObject) {
         UploadPictureResult result = new UploadPictureResult();
         // 提取图片元信息
         int width = compressedCiObject.getWidth();
@@ -151,7 +158,8 @@ public abstract class PictureUploadTemplate {
         result.setPicFormat(compressedCiObject.getFormat());
         result.setPicSize(Long.valueOf(compressedCiObject.getSize()));
         result.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());  // 完整访问URL
-
+        // 封装缩略图地址
+        result.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         return result;
     }
 
@@ -181,6 +189,7 @@ public abstract class PictureUploadTemplate {
         result.setPicFormat(imageInfo.getFormat());
         result.setPicSize(FileUtil.size(file));
         result.setUrl(cosClientConfig.getHost() + "/" + uploadPath);  // 完整访问URL
+
 
         return result;
     }

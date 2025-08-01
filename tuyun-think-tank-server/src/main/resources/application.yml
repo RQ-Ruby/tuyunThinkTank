@@ -43,7 +43,6 @@ knife4j:
     version: 1.0
     group:
       default:
-#        存在中文报错
 #        group-name: 默认分组
         api-rule: package
         api-rule-resources:
