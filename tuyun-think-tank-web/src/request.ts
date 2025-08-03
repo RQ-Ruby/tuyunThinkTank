@@ -1,16 +1,17 @@
 /*请求封装*/
 import axios from 'axios'
 import { message } from 'ant-design-vue'
-
+// 区分开发和生产环境
+const DEV_BASE_URL = "http://localhost:8123";
+const PROD_BASE_URL = "http://49.232.170.236";
 // 创建 Axios 实例
 const myAxios = axios.create({
-  //  请求的 baseURL
-  baseURL: 'http://localhost:8123',
-  //  请求超时时间
-  timeout: 60000,
-  //  允许携带 Cookie
+  baseURL: PROD_BASE_URL,
+  timeout: 10000,
   withCredentials: true,
-})
+});
+
+
 
 // 全局请求拦截器
 myAxios.interceptors.request.use(
