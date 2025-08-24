@@ -6,7 +6,7 @@ const DEV_BASE_URL = "http://localhost:8123";
 const PROD_BASE_URL = "http://49.232.170.236";
 // 创建 Axios 实例
 const myAxios = axios.create({
-  baseURL: PROD_BASE_URL,
+  baseURL: DEV_BASE_URL,
   timeout: 10000,
   withCredentials: true,
 });

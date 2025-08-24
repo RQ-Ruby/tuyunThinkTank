@@ -12,12 +12,14 @@ import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.model.dto.picture.*;
 import com.RQ.tuyunthinktank.model.entity.Picture;
+import com.RQ.tuyunthinktank.model.entity.Space;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.PictureReviewStatusEnum;
 import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.PictureTagCategory;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
 import com.RQ.tuyunthinktank.service.PictureService;
+import com.RQ.tuyunthinktank.service.SpaceService;
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -52,6 +54,8 @@ public class PictureController {
     private UserService userService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private SpaceService spaceService;
     /**
      * @description 图片上传（URL）
      * @author RQ
@@ -100,13 +104,9 @@ public class PictureController {
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
         // 4. 权限校验（管理员或资源所有者）
-        if (!loginUser.getUserRole().equals(UserRoleEnum.ADMIN.getValue())
-                && !oldPicture.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        pictureService.checkSpaceAuth(oldPicture, loginUser);
         // 5. 执行删除并校验结果
-        boolean result = pictureService.removeById(id);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片删除失败");
+         pictureService.deletePicture(id, loginUser);
 
         log.info("图片删除成功 ID:{} 操作者:{}", id, loginUser.getId());
         return ResultUtils.success(true);
@@ -175,6 +175,10 @@ public class PictureController {
         // 查询数据库
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        // 校验权限
+        User loginUser = userService.getLoginUser(request);
+        if(picture.getSpaceId()!=null)
+        pictureService.checkSpaceAuth(picture, loginUser);
         // 获取封装类
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
     }
@@ -202,13 +206,30 @@ public class PictureController {
      * @date 2025/6/13 下午6:16
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest) { // 移除 request 参数
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) { // 移除 request 参数
         // 参数校验（增强健壮性）
         ThrowUtils.throwIf(pictureQueryRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
         ThrowUtils.throwIf(current <= 0 || size <= 0, ErrorCode.PARAMS_ERROR, "分页参数错误");
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR, "单页数量不能超过20");
+        // 空间权限校验
+        Long spaceId = pictureQueryRequest.getSpaceId();
+// 公开图库
+        if (spaceId == null) {
+            // 普通用户默认只能查看已过审的公开数据
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            pictureQueryRequest.setNullSpaceId(true);
+        } else {
+            // 私有空间
+            User loginUser = userService.getLoginUser(request);
+            Space space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            if (!loginUser.getId().equals(space.getUserId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
+            }
+        }
+
         // 普通用户默认只能查看已过审的数据
         pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
 
@@ -252,6 +273,8 @@ public class PictureController {
         pictureService.validPicture(picture);
         //4.补充审核参数
         pictureService.setPictureReviewStatus(picture, loginUser);
+        // 空间权限校验
+        pictureService.checkSpaceAuth(picture, loginUser);
         // 5. 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
@@ -266,6 +289,8 @@ public class PictureController {
      * @author RQ
      * @date 2025/7/19 下午5:12
      */
+
+    @Deprecated
     @PostMapping("/list/page/vo/cache")
     public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,
                                                                       HttpServletRequest request) {

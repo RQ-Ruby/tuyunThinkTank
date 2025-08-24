@@ -86,4 +86,16 @@ public interface PictureService extends IService<Picture> {
  * @date 2025/7/19 下午5:28
  */
     Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
+/**
+ * @description 校验空间权限
+ * @author RQ
+ * @date 2025/8/18 下午1:30
+ */
+    void checkSpaceAuth(Picture  picture, User loginUser);
+/**
+ * @description 删除图片
+ * @author RQ
+ * @date 2025/8/18 下午4:55
+ */
+    void deletePicture(Long pictureId, User loginUser);
 }

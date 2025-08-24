@@ -15,6 +15,7 @@
             <result property="picSize" column="picSize" />
             <result property="picWidth" column="picWidth" />
             <result property="picHeight" column="picHeight" />
+            <result property="spaceId" column="spaceId" />
             <result property="picScale" column="picScale" />
             <result property="picFormat" column="picFormat" />
             <result property="userId" column="userId" />
@@ -26,7 +27,7 @@
 
     <sql id="Base_Column_List">
         id,url,name,introduction,category,tags,
-        thumbnailUrl,
+        thumbnailUrl,spaceId,
         picSize,picWidth,picHeight,picScale,picFormat,
         userId,createTime,editTime,updateTime,isDelete
     </sql>

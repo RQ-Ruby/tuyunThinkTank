@@ -45,6 +45,11 @@ public class Picture {
     private String category;
 
     /**
+     * 空间id
+     */
+    private Long spaceId;
+
+    /**
      * 标签（JSON 数组）
      */
     private String tags;

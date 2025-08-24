@@ -4,12 +4,14 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.StrUtil;
 import com.RQ.tuyunthinktank.common.ResultUtils;
 import com.RQ.tuyunthinktank.config.CosClientConfig;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
+import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
@@ -152,4 +154,30 @@ public class FileManage {
             }
         }
     }
+
+    /**
+     * @description 清理图片文件
+     * @author RQ
+     * @date 2025/8/18 下午5:00
+     */
+    public void clearPictureFile(Picture picture) {
+        if (picture == null || StrUtil.isBlank(picture.getUrl())) {
+            return;
+        }
+        
+        try {
+            // 从URL中提取文件路径
+            String url = picture.getUrl();
+            String host = cosClientConfig.getHost();
+            if (url.startsWith(host)) {
+                String filePath = url.substring(host.length() + 1);
+                // 删除对象存储中的文件
+                cosClient.deleteObject(cosClientConfig.getBucket(), filePath);
+                log.info("已删除图片文件: {}", filePath);
+            }
+        } catch (Exception e) {
+            log.error("删除图片文件失败, pictureId = {}", picture.getId(), e);
+        }
+    }
+
 }
