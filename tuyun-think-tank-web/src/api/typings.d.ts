@@ -210,6 +210,7 @@ declare namespace API {
   }
 
   type PictureUploadRequest = {
+
     id?: number
     picName?: string
     url?: string

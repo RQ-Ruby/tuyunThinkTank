@@ -1,5 +1,17 @@
 <template>
   <div id="addPicturePage">
+    <div v-if="picture" class="edit-bar">
+
+      <CorpPicture
+        ref="imageCropperRef"
+        :imageUrl="picture?.url"
+        :picture="picture"
+        :spaceId="picture.id"
+        :onSuccess="onCropSuccess"
+      />
+    </div>
+
+
     <h2 style="margin-bottom: 16px">
       {{ route.query?.id ? '修改图片' : '创建图片' }}
     </h2>
@@ -13,7 +25,7 @@
         <UrlPictureUpload :picture="picture" :onSuccess="onSuccess" />
       </a-tab-pane>
     </a-tabs>
-
+    <a-button :icon="h(EditOutlined)" @click="doEditPicture">编辑图片</a-button>
     <a-form layout="vertical" v-if="picture" :model="pictureForm" @finish="handleSubmit">
 <!--      name属性用于标识表单元素的名称，在提交表单时会被提交到服务器-->
       <a-form-item label="名称" name="name">
@@ -52,12 +64,14 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { onMounted, reactive, ref } from 'vue'
+import { h, onMounted, reactive, ref } from 'vue'
 // 正确导入语句应为：
 import { useRoute, useRouter } from 'vue-router'
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
+import CorpPicture from '@/components/CorpPicture.vue'
+import { EditOutlined } from '@ant-design/icons-vue'
 // 上传方式
 const uploadType = ref<string>('file')
 
@@ -89,6 +103,22 @@ const onSuccess = (newPicture: API.PictureVO) => {
  * 路由跳转组件
  */
 //pictureouter 是一个钩子函数，用于在组件中获取路由对象，管理页面跳转、参数传递等导航功能
+
+// 图片编辑弹窗引用
+const imageCropperRef = ref()
+
+// 编辑图片
+const doEditPicture = () => {
+  if (imageCropperRef.value) {
+    imageCropperRef.value.openModal()
+  }
+}
+
+// 图片编辑成功事件
+const onCropSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
+
 
 
 /**
