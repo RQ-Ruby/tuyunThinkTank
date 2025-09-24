@@ -29,12 +29,12 @@
           size="large"/>
       </div>
 
-      <!-- 左侧功能按钮 -->
+<!--      &lt;!&ndash; 左侧功能按钮 &ndash;&gt;
       <div class="action-buttons">
         <a-button type="primary" ghost class="custom-button">许愿池</a-button>
         <a-button type="primary" ghost class="custom-button">我的收藏</a-button>
         <a-button type="primary" ghost class="custom-button">给我留言</a-button>
-      </div>
+      </div>-->
     </div>
 
     </div>

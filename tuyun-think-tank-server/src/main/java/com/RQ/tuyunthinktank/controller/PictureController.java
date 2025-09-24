@@ -1,8 +1,12 @@
 package com.RQ.tuyunthinktank.controller;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.RQ.tuyunthinktank.annotation.AuthCheck;
+import com.RQ.tuyunthinktank.api.aliyunai.AliYunAiApi;
+import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.RQ.tuyunthinktank.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.common.BaseResponse;
 import com.RQ.tuyunthinktank.common.DeleteRequest;
 import com.RQ.tuyunthinktank.common.ResultUtils;
@@ -56,6 +60,9 @@ public class PictureController {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private SpaceService spaceService;
+    @Resource
+    private AliYunAiApi aliYunAiApi;
+
     /**
      * @description 图片上传（URL）
      * @author RQ
@@ -344,6 +351,41 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+   /**
+    * @description 创建 AI 扩图任务
+    * @author RQ
+    * @date 2025/9/24 下午1:48
+    */
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            HttpServletRequest request) {
+        // 校验参数
+        if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图片 id 不能为空");
+        }
+        // 校验用户权限
+        User loginUser = userService.getLoginUser(request);
+        // 调用 Service 层方法创建任务
+        CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(response);
+    }
+
+    /**
+     * @description 查询 AI 扩图任务
+     * @author RQ
+     * @date 2025/9/24 下午1:48
+     */
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> getPictureOutPaintingTask(String taskId) {
+        // 校验参数
+        ThrowUtils.throwIf(StrUtil.isBlank(taskId), ErrorCode.PARAMS_ERROR);
+        // 调用 AI 服务查询任务状态
+        GetOutPaintingTaskResponse task = aliYunAiApi.getOutPaintingTask(taskId);
+        // 校验任务是否存在
+        ThrowUtils.throwIf(task == null, ErrorCode.PARAMS_ERROR, "任务不存在");
+        return ResultUtils.success(task);
     }
 
 }

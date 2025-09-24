@@ -1,9 +1,7 @@
 package com.RQ.tuyunthinktank.service;
 
-import com.RQ.tuyunthinktank.model.dto.picture.PictureByBatchRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureQueryRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureReviewRequest;
-import com.RQ.tuyunthinktank.model.dto.picture.PictureUploadRequest;
+import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.RQ.tuyunthinktank.model.dto.picture.*;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
@@ -98,4 +96,11 @@ public interface PictureService extends IService<Picture> {
  * @date 2025/8/18 下午4:55
  */
     void deletePicture(Long pictureId, User loginUser);
+
+    /**
+     * @description 创建图片扩图任务
+     * @author RQ
+     * @date 2025/9/22 下午4:44
+     */
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 }

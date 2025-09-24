@@ -1,10 +1,14 @@
 package com.RQ.tuyunthinktank.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.RQ.tuyunthinktank.api.aliyunai.AliYunAiApi;
+import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.common.LocalCacheManager;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
@@ -75,6 +79,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private SpaceService spaceService;
     @Resource
     private TransactionTemplate transactionTemplate;
+    @Resource
+    private AliYunAiApi aliYunAiApi;
 
 
     /**
@@ -629,6 +635,25 @@ public void deletePicture(Long pictureId, User loginUser) {
     // 说明：分离文件操作与数据库事务，避免分布式文件系统延迟影响事务性能
     fileManage.clearPictureFile(oldPicture);
 }
+
+    @Override
+    public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+              // 获取图片信息
+            Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+            Picture picture = this.getById(pictureId);
+            // 校验图片是否存在
+            ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            // 权限校验
+            checkSpaceAuth( picture,loginUser);
+            // 构造请求参数
+            CreateOutPaintingTaskRequest outPaintingRequest = new CreateOutPaintingTaskRequest();
+            CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+            input.setImageUrl(picture.getUrl());
+            outPaintingRequest.setInput(input);
+            BeanUtil.copyProperties(createPictureOutPaintingTaskRequest, outPaintingRequest);
+            // 创建任务
+            return aliYunAiApi.createOutPaintingTask(outPaintingRequest);
+    }
 
 }
 
