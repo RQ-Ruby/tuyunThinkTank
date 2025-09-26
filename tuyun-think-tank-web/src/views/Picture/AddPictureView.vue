@@ -25,7 +25,11 @@
         <UrlPictureUpload :picture="picture" :onSuccess="onSuccess" />
       </a-tab-pane>
     </a-tabs>
+<!--图片编辑   -->
     <a-button :icon="h(EditOutlined)" @click="doEditPicture">编辑图片</a-button>
+<!--AI扩图    -->
+    <AiOutPicture ref="imageOutPictureRef" :picture="picture" :on-success="onImageOutSuccess" />
+    <a-button type="primary" @click="doImageOut">AI扩图</a-button>
     <a-form layout="vertical" v-if="picture" :model="pictureForm" @finish="handleSubmit">
 <!--      name属性用于标识表单元素的名称，在提交表单时会被提交到服务器-->
       <a-form-item label="名称" name="name">
@@ -72,6 +76,7 @@ import { message } from 'ant-design-vue'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 import CorpPicture from '@/components/CorpPicture.vue'
 import { EditOutlined } from '@ant-design/icons-vue'
+import AiOutPicture from "@/components/AiOutPicture.vue";
 // 上传方式
 const uploadType = ref<string>('file')
 
@@ -104,8 +109,9 @@ const onSuccess = (newPicture: API.PictureVO) => {
  */
 //pictureouter 是一个钩子函数，用于在组件中获取路由对象，管理页面跳转、参数传递等导航功能
 
-// 图片编辑弹窗引用
+// ------图片编辑弹窗引用----------
 const imageCropperRef = ref()
+
 
 // 编辑图片
 const doEditPicture = () => {
@@ -118,6 +124,22 @@ const doEditPicture = () => {
 const onCropSuccess = (newPicture: API.PictureVO) => {
   picture.value = newPicture
 }
+
+// -----------图片AI扩图弹窗引用------
+const imageOutPictureRef = ref()
+
+// 图片AI扩图
+const doImageOut = async () => {
+    // 调用AI扩图组件的方法
+    imageOutPictureRef.value?.openModal()
+}
+
+// 图片AI扩图成功事件
+const onImageOutSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
+
+
 
 
 

@@ -4,6 +4,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.RQ.tuyunthinktank.annotation.AuthCheck;
+import com.RQ.tuyunthinktank.annotation.RateLimiter;
 import com.RQ.tuyunthinktank.api.aliyunai.AliYunAiApi;
 import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.api.aliyunai.model.GetOutPaintingTaskResponse;
@@ -357,20 +358,28 @@ public class PictureController {
     * @author RQ
     * @date 2025/9/24 下午1:48
     */
-    @PostMapping("/out_painting/create_task")
-    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
-            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
-            HttpServletRequest request) {
-        // 校验参数
-        if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图片 id 不能为空");
-        }
-        // 校验用户权限
-        User loginUser = userService.getLoginUser(request);
-        // 调用 Service 层方法创建任务
-        CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
-        return ResultUtils.success(response);
-    }
+   @PostMapping("/out_painting/create_task")
+   // 60 秒内最多 10 次，防止恶意刷接口
+   @RateLimiter(key = "createOutPainting", time = 60, count = 10)
+   public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+           @RequestBody(required = true) CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+           HttpServletRequest request) {
+       // 1. 校验请求参数：确保请求体和图片 ID 不为空
+       ThrowUtils.throwIf(createPictureOutPaintingTaskRequest == null,
+               ErrorCode.PARAMS_ERROR, "请求参数不能为空");
+       ThrowUtils.throwIf(createPictureOutPaintingTaskRequest.getPictureId() == null,
+               ErrorCode.PARAMS_ERROR, "图片 ID 不能为空");
+
+       // 2. 获取当前登录用户（权限校验）
+       User loginUser = userService.getLoginUser(request);
+
+       // 3. 调用业务服务层创建扩图任务
+       CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(
+               createPictureOutPaintingTaskRequest, loginUser);
+
+       // 4. 返回成功响应
+       return ResultUtils.success(response);
+   }
 
     /**
      * @description 查询 AI 扩图任务
@@ -379,11 +388,11 @@ public class PictureController {
      */
     @GetMapping("/out_painting/get_task")
     public BaseResponse<GetOutPaintingTaskResponse> getPictureOutPaintingTask(String taskId) {
-        // 校验参数
+        //1. 校验参数
         ThrowUtils.throwIf(StrUtil.isBlank(taskId), ErrorCode.PARAMS_ERROR);
-        // 调用 AI 服务查询任务状态
+        // 2. 调用 AI 服务查询任务状态
         GetOutPaintingTaskResponse task = aliYunAiApi.getOutPaintingTask(taskId);
-        // 校验任务是否存在
+        // 3.校验任务是否存在
         ThrowUtils.throwIf(task == null, ErrorCode.PARAMS_ERROR, "任务不存在");
         return ResultUtils.success(task);
     }

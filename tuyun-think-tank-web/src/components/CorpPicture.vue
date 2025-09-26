@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    class="image-cropper"
+    class="AIOutPicture"
     v-model:visible="visible"
     title="编辑图片"
     :footer="false"
@@ -137,11 +137,11 @@ defineExpose({
 </script>
 
 <style>
-.image-cropper {
+.AIOutPicture {
   text-align: center;
 }
 
-.image-cropper .vue-cropper {
+.AIOutPicture .vue-cropper {
   height: 400px !important;
 }
 </style>
