@@ -46,7 +46,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     private UserService userService;
     @Resource
     private TransactionTemplate transactionTemplate;  // 注入Spring的事务模板，用于编程式事务管理[6,7](@ref)
-/**
+
+    /**
  * @description 添加空间
  * @author RQ
  * @date 2025/8/15 下午7:58

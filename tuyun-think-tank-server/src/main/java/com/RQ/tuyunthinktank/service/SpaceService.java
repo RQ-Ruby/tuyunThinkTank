@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
  * @createDate 2025-08-04 18:17:26
  */
 public interface SpaceService extends IService<Space> {
+
     /**
      * @description 添加空间
      * @author RQ

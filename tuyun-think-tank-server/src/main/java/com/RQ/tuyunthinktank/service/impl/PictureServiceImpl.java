@@ -592,7 +592,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             } else {
                 //私有空间，仅空间管理员可操作
                 if (!picture.getUserId().equals(loginUser.getId())) {
-                    // 私有空间，仅空间管理员可操作
                     throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
                 }
 
