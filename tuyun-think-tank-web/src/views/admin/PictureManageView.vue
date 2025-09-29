@@ -116,7 +116,7 @@ import {
   listPictureByPageUsingPost,
   updatePictureUsingPost
 } from '@/api/pictureController'
-import { PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_MAP, PIC_REVIEW_STATUS_OPTIONS } from '@/contants/picyure'
+import { PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_MAP, PIC_REVIEW_STATUS_OPTIONS } from '@/constants/picyure'
 
 // 表格列定义
 const columns = [
@@ -200,6 +200,7 @@ const paging = computed(() => {
 const fetchData = async () => {
   const res = await listPictureByPageUsingPost({
     ...searchParams,
+    nullSpaceId: true,
   })
   if (res.data.data) {
     dataList.value = res.data.data.records ?? []

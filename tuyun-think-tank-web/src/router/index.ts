@@ -1,12 +1,16 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import HomeView  from '@/views/HomeView.vue'
 import UserLoginView from '@/views/user/UserLoginView.vue'
 import UserRegisterView from '@/views/user/UserRegisterView.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import AddPictureView from '@/views/Picture/AddPictureView.vue'
-import PictureManageVewView from '@/views/Picture/PictureManageVewView.vue'
+import PictureManageView from '@/views/admin/PictureManageView.vue'
 import PictureInformationView from '@/views/Picture/PictureInformationView.vue'
 import AddPictureBatchView from '@/views/Picture/AddPictureBatchView.vue'
+import SpaceManageView from '@/views/admin/SpaceManageView.vue'
+import AddSpaceView from '@/views/space/AddSpaceView.vue'
+import MySpaceView from '@/views/space/MySpaceView.vue'
+import SpaceDetailView from '@/views/space/SpaceDetailView.vue'
 /**
  * 路由配置
  */
@@ -52,17 +56,38 @@ const router = createRouter({
   {
     path: '/admin/pictureManage',
     name: '图片管理',
-    component: PictureManageVewView,
+    component: PictureManageView,
   },
+    {
+      path: '/admin/spaceManage',
+      name: '空间管理',
+      component: SpaceManageView,
+    },
     {
       path: '/picture/:id',
       name: '图片详情',
       component: PictureInformationView,
       props: true,
-    }
+    },
+    {
+      path: '/add_space',
+      name: '创建空间',
+      component: AddSpaceView,
+    },
+    {
+      path: '/my_space',
+      name: '我的空间',
+      component: MySpaceView,
+    },
+    {
+      path: '/space/:id',
+      name: '空间详情',
+      component: SpaceDetailView,
+      props: true,
+    },
 
-   ,
-  {
+
+    {
       path: '/about',
       name: '关于',
       // route level code-splitting

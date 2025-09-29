@@ -2,18 +2,30 @@
 
 <template>
   <a-row :wrap="false">
-    <a-col flex="200px">
-      <RouterLink to="/">
-        <div class="title-bar">
-          <img class="logo" src="../assets/logo.png" alt="logo" />
-          <div class="title">图云智库</div>
-        </div>
-      </RouterLink>
+    <a-col flex="auto">
+      <div class="header-left">
+        <!-- 侧边栏切换按钮 -->
+        <a-button 
+          v-if="loginUserStore.loginUser.id"
+          type="text" 
+          class="sidebar-toggle-btn"
+          @click="toggleSidebar"
+        >
+          <MenuOutlined />
+        </a-button>
+        
+        <RouterLink to="/">
+          <div class="title-bar">
+            <img class="logo" src="../assets/logo.png" alt="logo" />
+            <div class="title">图云智库</div>
+          </div>
+        </RouterLink>
+      </div>
     </a-col>
     <a-col flex="auto">
       <a-menu v-model:selectedKeys="current" mode="horizontal" :items="items" @click="doMenu" />
     </a-col>
-    <a-col flex="120px">
+    <a-col flex="160px">
       <!--         用户登录状态-->
       <div class="user-login-status">
         <div v-if="loginUserStore.loginUser.id">
@@ -24,6 +36,12 @@
             </ASpace>
             <template #overlay>
               <a-menu>
+              <a-menu-item>
+                <router-link to="/my_space">
+                  <UserOutlined />
+                  我的空间
+                </router-link>
+              </a-menu-item>
                 <a-menu-item @click="doLogout">
                   <LogoutOutlined />
                   退出登录
@@ -42,13 +60,16 @@
 </template>
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons-vue'
 //为什么是type，而不能直接import  { MenuProps } from 'ant-design-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
+import { useSidebarStore } from '@/stores/useSidebarStore'
 import { userLogoutUsingPost } from '@/api/userController'
+
 const loginUserStore = useLoginUserStore()
+const sidebarStore = useSidebarStore()
 //原始菜单
 const originItems = [
   {
@@ -72,6 +93,12 @@ const originItems = [
     key: '/admin/pictureManage',
     label: '图片管理',
     title: '图片管理',
+  }
+  ,
+  {
+    key: '/admin/spaceManage',
+    label: '空间管理',
+    title: '空间管理',
   }
   ,
 
@@ -119,6 +146,11 @@ router.afterEach((to, from, next) => {
   current.value = [to.path]
 })
 
+// 切换侧边栏显示状态
+const toggleSidebar = () => {
+  sidebarStore.toggleSidebar()
+}
+
 // 用户注销
 const doLogout = async () => {
   const res = await userLogoutUsingPost()
@@ -136,6 +168,26 @@ const doLogout = async () => {
 </script>
 
 <style scoped>
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #f0f0f0;
+}
+
 .title-bar {
   display: flex;
   align-items: center;
@@ -149,5 +201,24 @@ const doLogout = async () => {
 
 .logo {
   height: 45px;
+}
+
+.user-login-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  padding-right: 16px;
+}
+
+.user-login-status .ant-space {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.user-login-status .ant-space:hover {
+  background-color: #f0f0f0;
 }
 </style>

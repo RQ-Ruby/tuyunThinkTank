@@ -1,154 +1,72 @@
 <template>
   <div id="homePage">
-    <a-carousel autoplay class="carousel-container">
-      <div class="carousel-item">
-        <div class="content-wrapper">
-          <h3 class="gradient-text">发现创意视觉</h3>
-          <p class="sub-text">探索海量优质图片资源</p>
-        </div>
-        <img src="/public/access/tu1.png" alt="创意视觉" class="carousel-image" />
-      </div>
-      <div class="carousel-item">
-        <div class="content-wrapper">
-          <h3 class="gradient-text">专业图库管理</h3>
-          <p class="sub-text">高效分类与检索系统</p>
-        </div>
-        <img src="/public/access/tu2.png" alt="图库管理" class="carousel-image" />
-      </div>
-    </a-carousel>
-    <!-- 新增的功能按钮和搜索区域 -->
-    <div class="search-container">
-      <!-- 搜索区域（移动到按钮左侧） -->
-      <div class="search-bar">
-        <a-input-search
-          style="height: 15px!important; padding: 0 10px!important;"
-          v-model:value="searchParams.searchText"
-          placeholder="请输入要查找的图片名称"
-          enter-button
-          @search="doSearch"
-          size="large"/>
-      </div>
+    <!--   图片列表 -->
+    <a-list
+      :grid="{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 4 }"
+      :data-source="dataList"
+      :loading="loading"
+    >
+      <template #renderItem="{ item: picture }">
+        <a-list-item style="padding: 0">
+          <a-list-item style="padding: 0">
+            <!-- 单张图片 -->
+            <a-card hoverable @click="doPicture(picture)" class="picture-card">
+              <template #cover>
+                <div class="image-container">
+                  <img
+                    style="height: 300px; object-fit: cover"
+                    :alt="picture.name"
+                    :src="picture.thumbnailUrl ?? picture.url"
+                  />
 
-<!--      &lt;!&ndash; 左侧功能按钮 &ndash;&gt;
-      <div class="action-buttons">
-        <a-button type="primary" ghost class="custom-button">许愿池</a-button>
-        <a-button type="primary" ghost class="custom-button">我的收藏</a-button>
-        <a-button type="primary" ghost class="custom-button">给我留言</a-button>
-      </div>-->
-    </div>
-
-    </div>
-    <!--分类和标签-->
-    <a-tabs v-model:activeKey="selectedCategory" @change="doSearch">
-      <a-tab-pane key="all" tab="全部" />
-      <a-tab-pane :key="category" :tab="category" v-for="category in categoryList" force-render />
-    </a-tabs>
-
-  <!-- 图片列表 -->
-  <PictureList :dataList="dataList" :loading="loading" />
-  <a-pagination
-    style="text-align: right"
-    v-model:current="searchParams.current"
-    v-model:pageSize="searchParams.pageSize"
-    :total="total"
-    @change="onPageChange"
-  />
-
-
-
+                  <div class="image-overlay">
+                    <div class="meta-content">
+                      <h4 class="title">{{ picture.name }}</h4>
+                      <a-flex vertical :gap="4">
+                        <a-tag color="green" class="category-tag">
+                          {{ picture.category ?? '默认' }}
+                        </a-tag>
+                        <a-flex wrap :gap="4">
+                          <a-tag v-for="tag in picture.tags" :key="tag" class="tag-item">
+                            {{ tag }}
+                          </a-tag>
+                        </a-flex>
+                      </a-flex>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </a-card>
+          </a-list-item>
+        </a-list-item>
+      </template>
+    </a-list>
+  </div>
 
 </template>
 
 <script setup lang="ts">
-import {  onMounted, reactive, ref } from 'vue'
-import {
-  listPictureTagCategoryUsingGet,
-  listPictureVoByPageUsingPost,
-} from '@/api/pictureController'
-import { message } from 'ant-design-vue'
-import PictureList from '@/components/PictureList.vue'
 
+import { useRouter } from 'vue-router'
 
-//分类和标签选项
-const categoryList = ref<string[]>([])
-const selectedCategory = ref<string>('all')
-const tagList = ref<string[]>([])
-const selectedTagList = ref<boolean[]>([])
-
-// 获取标签和分类选项
-const getTagCategoryOptions = async () => {
-  const res = await listPictureTagCategoryUsingGet()
-  if (res.data.code === 0 && res.data.data) {
-    // 转换成下拉选项组件接受的格式
-    //map的作用把数组中的每个元素都按照固定规则转换成新形式，生成一个新数组（原数组不变）。
-    tagList.value = res.data.data.tagList ?? []
-    categoryList.value = res.data.data.categoryList ?? []
-  } else {
-    message.error('加载选项失败' + res.data.message)
-  }
-}
-//钩子函数：在组件挂载后执行
-onMounted(() => {
-  //在页面加载时获取标签和分类选项
-  getTagCategoryOptions()
-})
-
-// 获取数据,搜索框进行搜索
-const doSearch = () => {
-  // 重置搜索条件，重新搜索时要让页面回到第一页
-  searchParams.current = 1
-  fetchData()
+// 定义组件接收的props
+interface Props {
+  dataList: API.PictureVO[]
+  loading: boolean
 }
 
-// 数据
-const dataList = ref<API.PictureVO[]>([])
-const total = ref(0)
-const loading = ref(true)
+const props = defineProps<Props>()
 
-// 搜索条件
-const searchParams = reactive<API.PictureQueryRequest>({
-  current: 1,
-  pageSize: 12,
-  sortField: 'createTime',
-  sortOrder: 'descend',
-})
-
-// 分页参数
-const onPageChange =(page: number, pageSize: number) => {
-      searchParams.current = page
-      searchParams.pageSize = pageSize
-      fetchData()
-    };
-
-const fetchData = async () => {
-  loading.value = true
-  // 转换搜索参数
-  const params = {
-    ...searchParams,
-    tags: [] as string[],
-  }
-  if (selectedCategory.value !== 'all') {
-    params.category = selectedCategory.value
-  }
-  selectedTagList.value.forEach((useTag, index) => {
-    if (useTag) {
-      params.tags.push(tagList.value[index])
-    }
+//点击图片跳转图片详情页
+const router = useRouter()
+const doPicture = (picture: API.PictureVO) => {
+  router.push({
+    path: `/picture/${picture.id}`, // 这里是反引号
   })
-  const res = await listPictureVoByPageUsingPost(params)
-  if (res.data.data) {
-    dataList.value = res.data.data.records ?? []
-    total.value = res.data.data.total ?? 0
-  } else {
-    message.error('获取数据失败，' + res.data.message)
-  }
-  loading.value = false
 }
 
-// 页面加载时请求一次
-onMounted(() => {
-  fetchData()
-})
+
+
 </script>
 
 <style scoped>
@@ -417,11 +335,11 @@ onMounted(() => {
 
 
 
-  .sub-text {
-    font-size: 1.4em;
-    padding: 8px 16px;
-    border-width: 0.5px;
-  }
+.sub-text {
+  font-size: 1.4em;
+  padding: 8px 16px;
+  border-width: 0.5px;
+}
 
 /* 修改渐变文字样式 */
 .gradient-text {
@@ -456,8 +374,8 @@ onMounted(() => {
   line-height: 1.6;
   padding: 12px 28px;
   background: linear-gradient(45deg,
-    rgba(0, 0, 0, 0.25) 0%,
-    rgba(0, 0, 0, 0.15) 100%);
+  rgba(0, 0, 0, 0.25) 0%,
+  rgba(0, 0, 0, 0.15) 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   backdrop-filter: blur(6px);
@@ -521,26 +439,26 @@ onMounted(() => {
   }
 }
 
-  /* 搜索框区域自动填充 */
+/* 搜索框区域自动填充 */
+#homePage .search-bar {
+  flex: 1;
+  max-width: 640px;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 16px;
+  }
+
+
+
   #homePage .search-bar {
-    flex: 1;
-    max-width: 640px;
+    max-width: 100%;
   }
-
-  /* 响应式调整 */
-  @media (max-width: 992px) {
-    .search-container {
-      flex-direction: column;
-      align-items: stretch;
-      padding: 0 16px;
-    }
-
-
-
-    #homePage .search-bar {
-      max-width: 100%;
-    }
-  }
+}
 
 
 

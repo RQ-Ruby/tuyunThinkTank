@@ -22,15 +22,21 @@ import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue';
 import { message, type UploadProps } from 'ant-design-vue'
 import { uploadPictureUsingPost } from '@/api/pictureController'
 
+// 定义上传参数的类型
+interface UploadParams {
+  id?: number
+  spaceId?: number
+}
 
 // 上传成功后返回的图片
 interface Props {
   picture?: API.PictureVO
+  /** 空间 id */
+  spaceId?: number
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 // 接收父组件传递的图片
 const props = defineProps<Props>()
-const params = props.picture ? { id: props.picture.id } : {};
 
 const beforeUpload = (file: UploadProps['fileList'][number]) => {
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
@@ -39,7 +45,6 @@ const beforeUpload = (file: UploadProps['fileList'][number]) => {
   }
   const isLt10M = file.size / 1024 / 1024 < 10
 
-
   if (!isLt10M) {
     message.error('不能上传超过 10M 的图片')
   }
@@ -47,14 +52,25 @@ const beforeUpload = (file: UploadProps['fileList'][number]) => {
 }
 
 const loading = ref<boolean>(false)
+
+// 定义上传请求的类型
+interface UploadRequestOption {
+  file: File
+}
+
 /**
  * 上传
  * @param file
  */
-const handleUpload = async ({ file }: any) => {
+const handleUpload = async ({ file }: UploadRequestOption) => {
   loading.value = true
   try {
-    const params = props.picture ? { id: props.picture.id } : {};
+    // 构建上传参数，明确指定类型
+    const params: UploadParams = props.picture ? { id: props.picture.id } : {}
+    if (props.spaceId) {
+      params.spaceId = props.spaceId
+    }
+
     const res = await uploadPictureUsingPost(params, {}, file)
     if (res.data.code === 0 && res.data.data) {
       message.success('图片上传成功')
@@ -64,16 +80,12 @@ const handleUpload = async ({ file }: any) => {
       message.error('图片上传失败，' + res.data.message)
     }
   } catch (error) {
+    console.error('图片上传失败:', error)
     message.error('图片上传失败')
   } finally {
     loading.value = false
   }
 }
-
-
-
-
-
 
 </script>
 <style scoped>

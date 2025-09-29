@@ -99,7 +99,7 @@ import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import router from '@/router'
 import { downloadImage, formatSize } from '@/util'
-import { PIC_REVIEW_STATUS_ENUM } from '@/contants/picyure'
+import { PIC_REVIEW_STATUS_ENUM } from '@/constants/picyure'
 /*图片下载  */
 const doDownload = () => {
   downloadImage(picture.value.url)

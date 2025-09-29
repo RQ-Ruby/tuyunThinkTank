@@ -31,6 +31,8 @@ import { UploadOutlined } from '@ant-design/icons-vue';
 // 上传成功后返回的图片
 interface Props {
   picture?: API.PictureVO
+  /** 空间 id */
+  spaceId?: number
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 // 接收父组件传递的图片
@@ -47,7 +49,10 @@ const loading = ref<boolean>(false)
 const handleUpload = async () => {
   loading.value = true
   try {
- const params:API.PictureUploadRequest={url: value19.value}
+    const params: API.PictureUploadRequest = { url: value19.value }
+    if (props.spaceId) {
+      params.spaceId = props.spaceId
+    }
     if (props.picture) {
       params.id = props.picture.id
     }

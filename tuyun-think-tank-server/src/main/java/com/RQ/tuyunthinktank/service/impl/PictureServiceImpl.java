@@ -203,6 +203,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
 
         picture.setName(picName);
+        // 设置空间ID
+        picture.setSpaceId(spaceId);
         //7.设置审核状态
         setPictureReviewStatus(picture, loginUser);
         // 开启事务
