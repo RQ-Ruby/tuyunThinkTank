@@ -1,7 +1,7 @@
 <template>
   <a-modal
     class="AIOutPicture"
-    v-model:visible="visible"
+    v-model:open="open"
     title="编辑图片"
     :footer="false"
     @cancel="closeModal"
@@ -117,17 +117,17 @@ const handleUpload = async ({ file }: { file: File }) => {
 }
 
 
-// 是否可见
-const visible = ref(false)
+// 弹窗开关
+const open = ref(false)
 
 // 打开弹窗
 const openModal = () => {
-  visible.value = true
+  open.value = true
 }
 
 // 关闭弹窗
 const closeModal = () => {
-  visible.value = false
+  open.value = false
 }
 
 // 暴露函数给父组件
@@ -145,4 +145,3 @@ defineExpose({
   height: 400px !important;
 }
 </style>
-

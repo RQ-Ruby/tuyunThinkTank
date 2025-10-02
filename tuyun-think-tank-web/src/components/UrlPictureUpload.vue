@@ -31,8 +31,6 @@ import { UploadOutlined } from '@ant-design/icons-vue';
 // 上传成功后返回的图片
 interface Props {
   picture?: API.PictureVO
-  /** 空间 id */
-  spaceId?: number
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 // 接收父组件传递的图片
@@ -49,12 +47,9 @@ const loading = ref<boolean>(false)
 const handleUpload = async () => {
   loading.value = true
   try {
-    const params: API.PictureUploadRequest = { url: value19.value }
-    if (props.spaceId) {
-      params.spaceId = props.spaceId
-    }
-    if (props.picture) {
-      params.id = props.picture.id
+ const params: API.PictureUploadRequest = {
+      url: imageUrl.value,
+      id: props.picture?.id
     }
 // 调用上传API（POST请求）
     const res = await uploadPictureByUrlUsingPost(params)
@@ -64,10 +59,11 @@ const handleUpload = async () => {
       // 将上传成功的图片信息传递给父组件
       props.onSuccess?.(res.data.data)
     } else {
-      message.error('图片上传失败，' + res.data.message)
+      message.error(`上传失败: ${res.data.message}`)
     }
   } catch (error) {
-    message.error('图片上传失败')
+    message.error('上传请求异常');
+      console.error(error)
   } finally {
     loading.value = false
   }

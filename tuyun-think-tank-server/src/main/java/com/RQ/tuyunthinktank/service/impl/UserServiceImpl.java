@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
+import com.RQ.tuyunthinktank.mapper.SpaceMapper;
 import com.RQ.tuyunthinktank.model.dto.user.UserQueryRequest;
 import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.LoginUserVO;
@@ -19,6 +20,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,8 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService{
+    @Resource
+    private SpaceMapper spaceMapper;
 /**
  * @description 用户注册
  * @param userAccount 用户账号
@@ -268,6 +272,14 @@ public boolean isAdmin(User user) {
             && UserRoleEnum.ADMIN.getValue()  // 获取管理员角色标识
             .equals(user.getUserRole());  // 比对用户角色字段
 }
+
+    @Override
+    public boolean isSpaceCreatorOrAdmin(Long spaceId, User loginUser) {
+
+        //检查用户是否为空间创建者或管理员
+        return  isAdmin(loginUser)||
+                spaceMapper.selectById(spaceId).getUserId().equals(loginUser.getId());
+    }
 
 
 }

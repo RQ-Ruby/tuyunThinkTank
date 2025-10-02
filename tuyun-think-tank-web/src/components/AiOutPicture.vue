@@ -1,7 +1,7 @@
 <template>
   <a-modal
     class="AIOutPicture"
-    v-model:visible="visible"
+    v-model:open="open"
     title="AI扩图"
     :footer="false"
     @cancel="closeModal"
@@ -288,15 +288,15 @@ const handleApply = async () => {
 }
 
 // 是否可见
-const visible = ref(false)
+const open = ref(false)
 // 打开弹窗
 const openModal = () => {
-  visible.value = true
+  open.value = true
 }
 
 // 关闭弹窗
 const closeModal = () => {
-  visible.value = false
+  open.value = false
 }
 
 // 暴露函数给父组件
@@ -354,4 +354,3 @@ defineExpose({
   border-radius: 6px;
 }
 </style>
-

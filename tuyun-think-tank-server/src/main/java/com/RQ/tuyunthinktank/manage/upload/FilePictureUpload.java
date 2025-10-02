@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 public class FilePictureUpload extends PictureUploadTemplate {
     // 常量定义（提高可维护性）
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 10MB限制
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 100MB限制
     private static final List<String> ALLOWED_EXTENSIONS =
             Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
     @Override  

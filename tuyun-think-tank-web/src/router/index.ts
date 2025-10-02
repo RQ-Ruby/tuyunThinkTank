@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView  from '@/views/HomeView.vue'
 import UserLoginView from '@/views/user/UserLoginView.vue'
 import UserRegisterView from '@/views/user/UserRegisterView.vue'
+import UserProfileView from '@/views/user/userProfile.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import AddPictureView from '@/views/Picture/AddPictureView.vue'
 import PictureManageView from '@/views/admin/PictureManageView.vue'
@@ -45,6 +46,11 @@ const router = createRouter({
     name: '用户注册',
     component: UserRegisterView,
     meta: { hideLayout: true }
+  },
+  {
+    path: '/user/profile',
+    name: '个人中心',
+    component: UserProfileView,
   },
 
 

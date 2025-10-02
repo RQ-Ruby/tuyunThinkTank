@@ -96,4 +96,11 @@ public interface UserService extends IService<User> {
  * @date 2025/6/13 下午3:06
  */
     boolean isAdmin(User user);
+/**
+ * @description  判断用户是否为空间创建者或管理员
+ * @return: boolean
+ * @author RQ
+ * @date 2025/9/29 上午10:36
+ */
+    boolean isSpaceCreatorOrAdmin(Long spaceId, User loginUser);
 }

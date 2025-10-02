@@ -218,7 +218,7 @@ const handleSubmit = async (values: any) => {
   z-index: 2;
   display: flex;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1000px; /* 从1200px减小到1000px */
   margin: 0 auto;
   padding: 40px 20px;
   min-height: 100vh;
@@ -228,13 +228,13 @@ const handleSubmit = async (values: any) => {
 /* ==================== 左侧内容区 ==================== */
 .left-content {
   flex: 1;
-  padding-right: 200px;
+  padding-right: 120px; /* 从200px减小到120px */
   color: white;
   position: relative;
   animation: fadeInLeft 0.8s ease-out;
-  /* 新增定位调整 */
-  margin: -150px 0 0 -200px;
-  transform: translateY(-4%);
+  /* 调整定位 */
+  margin: -100px 0 0 -120px; /* 调整margin值 */
+  transform: translateY(-3%); /* 从-4%调整到-3% */
 }
 
 @keyframes fadeInLeft {
@@ -252,7 +252,10 @@ const handleSubmit = async (values: any) => {
 @media (max-width: 992px) {
   .left-content {
     padding-right: 0;
-    margin: 0 0 60px 0 !important; /* 移动端重置定位 */
+    margin: 0 0 40px 0 !important; /* 从60px减小到40px */
+    text-align: center;
+    animation: none;
+    opacity: 1;
     transform: none;
   }
 }
@@ -282,10 +285,10 @@ const handleSubmit = async (values: any) => {
 
 /* 大标题 */
 .slogan {
-  font-size: 48px;
+  font-size: 40px; /* 从48px减小到40px */
   font-weight: 900;
   line-height: 1.15;
-  margin: 40px 0 20px;
+  margin: 30px 0 15px; /* 调整margin */
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   position: relative;
   letter-spacing: -0.5px;
@@ -299,9 +302,9 @@ const handleSubmit = async (values: any) => {
 
 /* 描述文字 */
 .jieshi {
-  font-size: 20px;
+  font-size: 18px; /* 从20px减小到18px */
   line-height: 1.6;
-  margin-bottom: 50px;
+  margin-bottom: 40px; /* 从50px减小到40px */
   max-width: 85%;
   position: relative;
   color: rgba(255, 255, 255, 0.85);
@@ -324,16 +327,16 @@ const handleSubmit = async (values: any) => {
 .feature-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 25px;
-  margin-top: 40px;
+  gap: 20px; /* 从25px减小到20px */
+  margin-top: 30px; /* 从40px减小到30px */
 }
 
 .feature-item {
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 20px;
+  border-radius: 12px; /* 从14px减小到12px */
+  padding: 16px; /* 从20px减小到16px */
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -351,11 +354,11 @@ const handleSubmit = async (values: any) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
+  width: 50px; /* 从60px减小到50px */
+  height: 50px; /* 从60px减小到50px */
   background: linear-gradient(135deg, #6a8ef7, #4b6cf0);
-  border-radius: 14px;
-  margin-right: 20px;
+  border-radius: 12px; /* 从14px减小到12px */
+  margin-right: 16px; /* 从20px减小到16px */
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
@@ -371,9 +374,9 @@ const handleSubmit = async (values: any) => {
 }
 
 .feature-text h3 {
-  font-size: 22px;
+  font-size: 18px; /* 从22px减小到18px */
   font-weight: 600;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0; /* 调整margin */
   letter-spacing: 0.3px;
   background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.95));
   -webkit-background-clip: text;
@@ -391,7 +394,7 @@ const handleSubmit = async (values: any) => {
 
 /* ==================== 右侧注册卡片 ==================== */
 .right-content {
-  min-width: 440px;
+  min-width: 380px; /* 从440px减小到380px */
   z-index: 3;
   animation: fadeInRight 0.8s ease-out;
 }
@@ -408,9 +411,9 @@ const handleSubmit = async (values: any) => {
 }
 
 .auth-card {
-  padding: 48px;
+  padding: 36px; /* 从48px减小到36px */
   background: rgba(255, 255, 255, 0.96);
-  border-radius: 24px;
+  border-radius: 20px; /* 从24px减小到20px */
   box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05),
@@ -433,10 +436,10 @@ const handleSubmit = async (values: any) => {
 
 .form-title {
   color: #1a1a1a;
-  font-size: 24px;
+  font-size: 22px; /* 从24px减小到22px */
   font-weight: 600;
   text-align: left;
-  margin: 0 0 32px 0;
+  margin: 0 0 28px 0; /* 从32px减小到28px */
   position: relative;
   z-index: 1;
 }
@@ -462,10 +465,10 @@ const handleSubmit = async (values: any) => {
 
 /* 输入框样式 */
 :deep(.ant-input) {
-  border-radius: 12px !important;
+  border-radius: 10px !important; /* 从12px减小到10px */
   border: 1px solid #e0e0e0;
   transition: all 0.3s ease;
-  height: 48px;
+  height: 44px; /* 从48px减小到44px */
   padding-left: 40px !important;
   position: relative;
   z-index: 1;
@@ -482,7 +485,7 @@ const handleSubmit = async (values: any) => {
 }
 
 :deep(.ant-input-affix-wrapper) {
-  border-radius: 12px !important;
+  border-radius: 10px !important; /* 从12px减小到10px */
   overflow: hidden;
 }
 
@@ -495,13 +498,13 @@ const handleSubmit = async (values: any) => {
 /* 按钮样式 */
 .submit-btn {
   width: 100%;
-  height: 52px;
+  height: 48px; /* 从52px减小到48px */
   font-size: 16px;
   font-weight: 600;
   background: linear-gradient(135deg, #4a90e2, #8e54e9);
   border: none;
   transition: transform 0.2s, box-shadow 0.2s;
-  border-radius: 12px;
+  border-radius: 10px; /* 从12px减小到10px */
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
@@ -538,28 +541,12 @@ const handleSubmit = async (values: any) => {
 /* ==================== 底部链接 ==================== */
 .form-footer {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 24px; /* 从30px减小到24px */
   color: #666;
-
-  /* 响应式调整 */
-  @media (max-width: 992px) {
-    .left-content {
-      padding-right: 0;
-      margin: 0 0 60px 0 !important; /* 移动端重置定位 */
-      transform: none;
-    }
-  }  font-size: 15px;
+  font-size: 14px; /* 从15px减小到14px */
   position: relative;
   z-index: 1;
-
-  /* 响应式调整 */
-  @media (max-width: 992px) {
-    .left-content {
-      padding-right: 0;
-      margin: 0 0 60px 0 !important; /* 移动端重置定位 */
-      transform: none;
-    }
-  }}
+}
 
 .login-link {
   color: #4b6cf0;
@@ -593,7 +580,7 @@ const handleSubmit = async (values: any) => {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 50px;
+  margin-top: 40px; /* 从50px减小到40px */
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -654,7 +641,7 @@ const handleSubmit = async (values: any) => {
 
   .left-content {
     padding-right: 0;
-    margin-bottom: 60px;
+    margin: 0 0 40px 0 !important; /* 从60px减小到40px */
     text-align: center;
     animation: none;
     opacity: 1;
@@ -722,11 +709,11 @@ const handleSubmit = async (values: any) => {
   }
 
   :deep(.ant-input) {
-    height: 44px;
+    height: 40px;
   }
 
   .submit-btn {
-    height: 48px;
+    height: 44px;
   }
 }
 </style>

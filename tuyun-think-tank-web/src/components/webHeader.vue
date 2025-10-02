@@ -5,15 +5,15 @@
     <a-col flex="auto">
       <div class="header-left">
         <!-- 侧边栏切换按钮 -->
-        <a-button 
+        <a-button
           v-if="loginUserStore.loginUser.id"
-          type="text" 
+          type="text"
           class="sidebar-toggle-btn"
           @click="toggleSidebar"
         >
           <MenuOutlined />
         </a-button>
-        
+
         <RouterLink to="/">
           <div class="title-bar">
             <img class="logo" src="../assets/logo.png" alt="logo" />
@@ -36,6 +36,12 @@
             </ASpace>
             <template #overlay>
               <a-menu>
+              <a-menu-item>
+                <router-link to="/user/profile">
+                  <UserOutlined />
+                  个人中心
+                </router-link>
+              </a-menu-item>
               <a-menu-item>
                 <router-link to="/my_space">
                   <UserOutlined />
@@ -104,8 +110,8 @@ const originItems = [
 
   {
     key: 'others',
-    label: h('a', { href: 'https://github.com/rich0807', target: '_blank' }, '关于赚钱'),
-    title: '关于赚钱',
+    label: h('a', { href: 'https://github.com/rich0807', target: '_blank' }, '关于作者'),
+    title: '关于作者',
   },
 ]
 //根据用户身份过滤菜单
@@ -142,7 +148,7 @@ const doMenu = ({ key }: { key: string }) => {
 // 当前选中菜单
 const current = ref<string[]>([])
 // 监听路由变化，更新当前选中菜单
-router.afterEach((to, from, next) => {
+router.afterEach((to) => {
   current.value = [to.path]
 })
 

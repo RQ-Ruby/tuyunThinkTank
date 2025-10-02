@@ -68,7 +68,7 @@
   <!-- 编辑用户弹窗 -->
   <!-- 在表格下方添加编辑模态框 -->
   <a-modal
-    v-model:open="visible"
+    v-model:open="open"
     title="编辑用户"
     @ok="handleUpdate"
 >
@@ -210,8 +210,8 @@ const doSearch = () => {
   fetchData()
 }
 
-//1.是否显示编辑对话框
-const visible = ref(false)
+//1.编辑弹窗开关
+const open = ref(false)
 //2.编辑用户 - 完善后的逻辑
 const doEdit = async (id: number) => {
   try {
@@ -219,7 +219,7 @@ const doEdit = async (id: number) => {
     if (res.data.code === 0 && res.data.data) {
       // 使用 Object.assign 保持响应性
       Object.assign(updateForm, res.data.data)
-      visible.value = true
+      open.value = true
     }
   } catch (e) {
     message.error('获取用户信息失败')
@@ -238,7 +238,7 @@ const handleUpdate = async () => {
   const updateRes = await updateUserUsingPost(updateForm)
   if (updateRes.data.code === 0) {
     message.success('更新成功')
-    visible.value = false
+    open.value = false
     fetchData() // 刷新表格
   } else {
     message.error('更新失败: ' + updateRes.data.message)
@@ -247,7 +247,7 @@ const handleUpdate = async () => {
 
 //5.取消编辑
 const handleCancel = () => {
-  visible.value = false
+  open.value = false
 }
 
 //删除用户
