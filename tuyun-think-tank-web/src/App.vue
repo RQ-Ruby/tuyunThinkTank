@@ -27,3 +27,11 @@ healthUsingGet().then((data) => {
 <style scoped>
 
 </style>
+
+<style>
+/* 让 Ant Design Vue 的图片预览层在所有布局之上 */
+.ant-image-preview-wrap,
+.ant-image-preview-mask {
+  z-index: 2000 !important;
+}
+</style>

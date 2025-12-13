@@ -6,7 +6,7 @@
           <div class="image-wrapper">
             <a-image
               :src="picture.url"
-              :preview="false"
+              :preview="true"
               class="preview-image"
             />
           </div>
