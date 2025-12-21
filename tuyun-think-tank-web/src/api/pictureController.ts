@@ -227,7 +227,7 @@ export async function doPictureBatchUsingPost(
   body: API.PictureByBatchRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/picture/upload/batch', {
+  return request<API.BaseResponseInteger_>('/api/picture/upload/batch', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

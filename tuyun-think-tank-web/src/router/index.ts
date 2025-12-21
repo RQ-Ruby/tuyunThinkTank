@@ -12,6 +12,7 @@ import SpaceManageView from '@/views/admin/SpaceManageView.vue'
 import AddSpaceView from '@/views/space/AddSpaceView.vue'
 import MySpaceView from '@/views/space/MySpaceView.vue'
 import SpaceDetailView from '@/views/space/SpaceDetailView.vue'
+import SpaceUserManageView from '@/views/space/SpaceUserManageView.vue'
 /**
  * 路由配置
  */
@@ -91,7 +92,12 @@ const router = createRouter({
       component: SpaceDetailView,
       props: true,
     },
-
+    {
+      path: '/spaceUserManage/:id',
+      name: '空间成员管理',
+      component: SpaceUserManageView,
+      props: true,
+    },
 
     {
       path: '/about',

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @author RQ
  * @date 2025/12/20 下午7:19
  */
-@Component
+//@Component
 @Slf4j
 public class DynamicShardingManager {
 
@@ -40,7 +40,7 @@ public class DynamicShardingManager {
 
     private static final String LOGIC_TABLE_NAME = "picture";
 
-    private static final String DATABASE_NAME = "logic_db"; // 配置文件中的数据库名称
+    private static final String DATABASE_NAME = "tuyun"; // 配置文件中的数据库名称
 
     @PostConstruct
     public void initialize() {

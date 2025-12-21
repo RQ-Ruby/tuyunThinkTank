@@ -50,8 +50,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     private UserService userService;
     @Resource
     private TransactionTemplate transactionTemplate;  // 注入Spring的事务模板，用于编程式事务管理[6,7](@ref)
-//    @Resource
-//    private DynamicShardingManager dynamicShardingManager;
+    //@Resource
+    private DynamicShardingManager dynamicShardingManager;
     @Resource
     private SpaceUserService spaceUserService;
 
@@ -102,7 +102,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "空间创建失败");
 
                 // 如果是团队空间，创建空间成员记录（创建者为管理员）
-                if (SpaceTypeEnum.TEAM.getValue() == spaceAddRequest.getSpaceType()) {
+                if (SpaceTypeEnum.TEAM.getValue() == space.getSpaceType()) {
                     SpaceUser spaceUser = new SpaceUser();
                     spaceUser.setSpaceId(space.getId());
                     spaceUser.setUserId(userId);

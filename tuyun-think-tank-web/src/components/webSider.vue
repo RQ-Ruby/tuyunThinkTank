@@ -1,6 +1,6 @@
 <template>
-  <div 
-    id="globalSider" 
+  <div
+    id="globalSider"
     v-if="loginUserStore.loginUser.id"
     :class="{ 'sidebar-hidden': !sidebarStore.isVisible }"
     @mouseenter="handleSidebarHover"
@@ -22,11 +22,11 @@
 
       <!-- 导航菜单 -->
       <div class="sidebar-menu">
-        <div 
-          v-for="item in menuItems" 
+        <div
+          v-for="item in menuItems"
           :key="item.key"
           class="menu-item"
-          :class="{ active: current.includes(item.key) }"
+          :class="{ active: current.includes(item.key), 'team-space-item': item.isTeamSpace }"
           @click="doMenuClick({ key: item.key })"
         >
           <div class="menu-icon">
@@ -52,21 +52,23 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { 
-  PictureOutlined, 
-  UserOutlined, 
-  SettingOutlined, 
+import { computed, h, ref, watchEffect } from 'vue'
+import {
+  PictureOutlined,
+  UserOutlined,
+  SettingOutlined,
   LogoutOutlined,
   HomeOutlined,
   FolderOutlined,
   HeartOutlined,
-  StarOutlined
+  StarOutlined, TeamOutlined
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import { useSidebarStore } from '@/stores/useSidebarStore.ts'
 import { message } from 'ant-design-vue'
+import { SPACE_TYPE_ENUM } from '@/constants/space'
+import { listMyTeamSpaceUsingPost } from '@/api/spaceUserController'
 
 const loginUserStore = useLoginUserStore()
 const sidebarStore = useSidebarStore()
@@ -88,7 +90,7 @@ const handleSidebarLeave = () => {
 }
 
 // 菜单项
-const menuItems = [
+const fixedMenuItems = [
   {
     key: '/',
     icon: HomeOutlined,
@@ -104,7 +106,14 @@ const menuItems = [
     label: '我的空间',
     icon: UserOutlined,
   },
+
   {
+    key: '/add_space?type=' + SPACE_TYPE_ENUM.TEAM,
+    label: '创建团队',
+    icon: () => h(TeamOutlined),
+  },
+
+{
     key: '/favorites',
     label: '我的收藏',
     icon: HeartOutlined,
@@ -128,11 +137,52 @@ router.afterEach((to) => {
 current.value = [router.currentRoute.value.path]
 
 // 路由跳转事件
-const doMenuClick = ({ key }) => {
-  router.push({
-    path: key,
-  })
+const doMenuClick = ({ key }: { key: string }) => {
+  router.push(key)
 }
+const teamSpaceList = ref<API.SpaceUserVO[]>([])
+const menuItems = computed(() => {
+  // 展示团队空间分组
+  const teamSpaceSubMenus = teamSpaceList.value.map((spaceUser) => {
+    const space = spaceUser.space
+    return {
+      key: '/space/' + spaceUser.spaceId,
+      label: space?.spaceName,
+      icon: TeamOutlined,
+      isTeamSpace: true,
+    }
+  })
+
+  // 扁平化处理，将团队空间插入到创建团队后面
+  return fixedMenuItems.reduce((acc, item) => {
+    acc.push(item)
+    if (item.key.startsWith('/add_space')) {
+      acc.push(...teamSpaceSubMenus)
+    }
+    return acc
+  }, [] as any[])
+})
+
+// 加载团队空间列表
+const fetchTeamSpaceList = async () => {
+  const res = await listMyTeamSpaceUsingPost()
+  if (res.data.code === 0 && res.data.data) {
+    teamSpaceList.value = res.data.data
+  } else {
+    message.error('加载我的团队空间失败，' + res.data.message)
+  }
+}
+
+/**
+ * 监听变量，改变时触发数据的重新加载
+ */
+watchEffect(() => {
+  // 登录才加载
+  if (loginUserStore.loginUser.id) {
+    fetchTeamSpaceList()
+  }
+})
+
 
 // 设置功能
 const handleSettings = () => {
@@ -258,6 +308,10 @@ const handleLogout = () => {
   transition: opacity 0.3s ease;
 }
 
+.team-space-item {
+  margin-left: 24px;
+}
+
 .menu-item:hover::before {
   opacity: 1;
 }
@@ -345,7 +399,7 @@ const handleLogout = () => {
     height: auto;
     min-height: 200px;
   }
-  
+
   .modern-sidebar {
     width: 100%;
     height: auto;

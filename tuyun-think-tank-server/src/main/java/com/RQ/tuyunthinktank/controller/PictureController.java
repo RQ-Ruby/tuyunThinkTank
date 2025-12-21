@@ -360,14 +360,14 @@ public class PictureController {
      */
     @PostMapping("/upload/batch")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> doPictureBatch(@RequestBody PictureByBatchRequest pictureByBatchRequest,
+    public BaseResponse<Integer> doPictureBatch(@RequestBody PictureByBatchRequest pictureByBatchRequest,
                                                 HttpServletRequest request) {
         ThrowUtils.throwIf(pictureByBatchRequest == null || pictureByBatchRequest.getSearchText() == null,
                 ErrorCode.PARAMS_ERROR, "请求参数非法");
         User loginUser = userService.getLoginUser(request);
-        pictureService.doPictureBatchUpload(pictureByBatchRequest, loginUser);
+        int uploadCount = pictureService.doPictureBatchUpload(pictureByBatchRequest, loginUser);
 
-        return ResultUtils.success(true);
+        return ResultUtils.success(uploadCount);
     }
 
 

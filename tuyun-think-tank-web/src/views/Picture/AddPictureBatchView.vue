@@ -24,15 +24,10 @@
 </template>
 
 <script setup lang="ts">
-// 正确导入语句应为：
-import {  useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { doPictureBatchUsingPost } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
-
 import { reactive, ref } from 'vue'
-
-
-// 正确初始化路由实例
 
 const router = useRouter()
 
@@ -41,32 +36,25 @@ const router = useRouter()
  */
 const pictureFBatchData = reactive<API.PictureByBatchRequest>({
   count: 10,
-
 })
 const loading = ref(false)
 
-
 const handleSubmit = async () => {
- loading.value = true
-
-  //await：等待异步操作，暂停当前代码执行，等待服务器返回结果，避免页面卡死。
+  loading.value = true
   const res = await doPictureBatchUsingPost({
     ...pictureFBatchData,
-
   })
   if (res.data.code === 0 && res.data.data) {
-    message.success('创建成功,共创建'+res.data.data+'张图片')
-    // 跳转到图片详情页
+    message.success('创建成功,共创建' + res.data.data + '张图片')
+    // 跳转到主页
     router.push({
       path: `/`,
     })
   } else {
     message.error('创建失败，' + res.data.message)
   }
+  loading.value = false
 }
-
-
-
 </script>
 
 <style scoped>
