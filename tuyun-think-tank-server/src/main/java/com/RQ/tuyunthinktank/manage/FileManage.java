@@ -5,7 +5,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
-import com.RQ.tuyunthinktank.common.ResultUtils;
 import com.RQ.tuyunthinktank.config.CosClientConfig;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
@@ -13,7 +12,6 @@ import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.qcloud.cos.COSClient;
-import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -59,11 +57,11 @@ public class FileManage {
      * @date 2025/6/11 下午10:43
      */
 
-    public UploadPictureResult uploadFile(MultipartFile multipartFile, String filePathPrefix){
+    public UploadPictureResult uploadFile(MultipartFile multipartFile, String filePathPrefix) {
         //校验图片
         validateFile(multipartFile);
         //获取文件后缀名
-        String contentType =  multipartFile.getOriginalFilename() != null ?  multipartFile.getOriginalFilename() : ""; // 避免空指针异常
+        String contentType = multipartFile.getOriginalFilename() != null ? multipartFile.getOriginalFilename() : ""; // 避免空指针异常
         contentType = contentType.substring(contentType.lastIndexOf(".") + 1).toLowerCase();
         // 生成短UUID（取前8位）+日期，如 "20240612_a1b2c3d4.jpg"
         //UUID版本4，是一种随机生成的标识符，通常用于生成全局唯一的标识符，如数据库主键、文件名称等
@@ -73,8 +71,8 @@ public class FileManage {
                 shortUUID,
                 contentType);
         //组合成完整的文件路径
-        String yunFilePath ="tuyun-thinkTank";
-        String filePath = String.format(yunFilePath+"/%s/%s", filePathPrefix, safeFilename);
+        String yunFilePath = "tuyun-thinkTank";
+        String filePath = String.format(yunFilePath + "/%s/%s", filePathPrefix, safeFilename);
         File temporaryFile = null;
         try {
             // 上传文件
@@ -117,7 +115,7 @@ public class FileManage {
      * @author RQ
      * @date 2025/6/11 下午10:04
      */
-    private void validateFile(MultipartFile file)  {
+    private void validateFile(MultipartFile file) {
         //校验文件是否为空
         ThrowUtils.throwIf(file == null, ErrorCode.PARAMS_ERROR, "文件不能为空");
         //校验文件大小
@@ -164,7 +162,7 @@ public class FileManage {
         if (picture == null || StrUtil.isBlank(picture.getUrl())) {
             return;
         }
-        
+
         try {
             // 从URL中提取文件路径
             String url = picture.getUrl();

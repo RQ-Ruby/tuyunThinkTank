@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+
 /**
- * @description 创建扩图任务请求参数
  * @author RQ
+ * @description 创建扩图任务请求参数
  * @date 2025/9/19 上午11:15
  */
 @Data

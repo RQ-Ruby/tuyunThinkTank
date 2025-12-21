@@ -9,9 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+
 /**
- * @description 图片上传服务（文件模式）
  * @author RQ
+ * @description 图片上传服务（文件模式）
  * @date 2025/7/16 下午7:32
  */
 @Service
@@ -20,7 +21,8 @@ public class FilePictureUpload extends PictureUploadTemplate {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 100MB限制
     private static final List<String> ALLOWED_EXTENSIONS =
             Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
-    @Override  
+
+    @Override
     protected void validPicture(Object inputSource) {
         MultipartFile multipartFile = (MultipartFile) inputSource;
 
@@ -38,25 +40,27 @@ public class FilePictureUpload extends PictureUploadTemplate {
         String fileExtension = FileUtil.getSuffix(originalFilename).toLowerCase();
         ThrowUtils.throwIf(!ALLOWED_EXTENSIONS.contains(fileExtension),
                 ErrorCode.PARAMS_ERROR, "仅支持JPG/PNG/WEBP格式");
-    }  
-  /**
-   * @description 获取原始文件名（含后缀）
-   * @author RQ
-   * @date 2025/7/16 下午5:42
-   */
-    @Override  
-    protected String getOriginFilename(Object inputSource) {  
-        MultipartFile multipartFile = (MultipartFile) inputSource;  
-        return multipartFile.getOriginalFilename();  
-    }  
+    }
+
+    /**
+     * @description 获取原始文件名（含后缀）
+     * @author RQ
+     * @date 2025/7/16 下午5:42
+     */
+    @Override
+    protected String getOriginFilename(Object inputSource) {
+        MultipartFile multipartFile = (MultipartFile) inputSource;
+        return multipartFile.getOriginalFilename();
+    }
+
     /**
      * @description 文件处理：将MultipartFile写入临时文件
      * @author RQ
      * @date 2025/7/16 下午5:42
      */
-    @Override  
+    @Override
     protected void processFile(Object inputSource, File file) throws Exception {
-        MultipartFile multipartFile = (MultipartFile) inputSource;  
-        multipartFile.transferTo(file);  
-    }  
+        MultipartFile multipartFile = (MultipartFile) inputSource;
+        multipartFile.transferTo(file);
+    }
 }

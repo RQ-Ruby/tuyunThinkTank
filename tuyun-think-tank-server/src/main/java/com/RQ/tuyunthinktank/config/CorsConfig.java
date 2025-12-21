@@ -5,17 +5,17 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * @description 全局跨域配置
  * @author RQ
+ * @description 全局跨域配置
  * @date 2025/5/25 下午4:19
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
-/**
- * @return: void
- * @author RQ
- * @date: 2025/5/25 下午4:28
- */
+    /**
+     * @return: void
+     * @author RQ
+     * @date: 2025/5/25 下午4:28
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // 全局跨域配置，覆盖所有请求

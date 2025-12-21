@@ -1,6 +1,5 @@
 package com.RQ.tuyunthinktank.model.enums;
 
-import cn.hutool.core.util.ObjUtil;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;

@@ -19,6 +19,11 @@ import javax.servlet.http.HttpServletRequest;
 
 @Aspect
 @Component
+/**
+ * @description 权限校验拦截器
+ * @author RQ
+ * @date 2025/12/20 下午7:19
+ */
 public class AuthInterceptor {
 
     @Resource

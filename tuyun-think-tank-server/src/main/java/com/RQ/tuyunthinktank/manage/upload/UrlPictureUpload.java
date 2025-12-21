@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @description 图片上传服务（URL模式）
  * @author RQ
+ * @description 图片上传服务（URL模式）
  * @date 2025/7/16 下午7:32
  */
 @Service
@@ -23,6 +23,7 @@ public class UrlPictureUpload extends PictureUploadTemplate {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 10MB限制
     private static final List<String> ALLOWED_EXTENSIONS =
             Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
+
     @Override
     protected void validPicture(Object inputSource) {
         String fileUrl = (String) inputSource;

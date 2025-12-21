@@ -1,12 +1,8 @@
 package com.RQ.tuyunthinktank.api.aliyunai.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class GetOutPaintingTaskResponse {
 
     /**
@@ -18,6 +14,14 @@ public class GetOutPaintingTaskResponse {
      * 输出信息
      */
     private Output output;
+
+    public GetOutPaintingTaskResponse(String requestId, Output output) {
+        this.requestId = requestId;
+        this.output = output;
+    }
+
+    public GetOutPaintingTaskResponse() {
+    }
 
     /**
      * 表示任务的输出信息

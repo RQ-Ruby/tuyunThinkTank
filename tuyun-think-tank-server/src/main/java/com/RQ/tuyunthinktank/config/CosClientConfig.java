@@ -9,6 +9,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 /**
  * 腾讯云cos配置
  */
@@ -17,33 +18,33 @@ import org.springframework.context.annotation.Configuration;
 // 注意：这里的前缀需要和application.yml中的前缀保持一致
 @ConfigurationProperties(prefix = "cos.client")
 @Data
-public class CosClientConfig {  
-  
-    /**  
-     * 域名  
-     */  
-    private String host;  
-  
-    /**  
-     * secretId  
-     */  
-    private String secretId;  
-  
-    /**  
+public class CosClientConfig {
+
+    /**
+     * 域名
+     */
+    private String host;
+
+    /**
+     * secretId
+     */
+    private String secretId;
+
+    /**
      * 密钥
-     */  
-    private String secretKey;  
-  
-    /**  
-     * 区域  
-     */  
-    private String region;  
-  
-    /**  
-     * 桶名  
-     */  
-    private String bucket;  
-  
+     */
+    private String secretKey;
+
+    /**
+     * 区域
+     */
+    private String region;
+
+    /**
+     * 桶名
+     */
+    private String bucket;
+
     @Bean
     /*腾讯云 Java SDK 源:https://cloud.tencent.com/document/product/436/65935*/
     public COSClient cosClient() {

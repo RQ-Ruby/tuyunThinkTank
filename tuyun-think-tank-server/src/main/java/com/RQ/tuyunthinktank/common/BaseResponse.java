@@ -6,10 +6,10 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * @description 全局响应封装类
- * @author RQ
- * @date 2025/5/25 下午4:17
  * @param <T>
+ * @author RQ
+ * @description 全局响应封装类
+ * @date 2025/5/25 下午4:17
  */
 @Data
 public class BaseResponse<T> implements Serializable {

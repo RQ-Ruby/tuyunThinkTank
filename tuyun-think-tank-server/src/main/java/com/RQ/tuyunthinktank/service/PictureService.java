@@ -12,10 +12,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import javax.servlet.http.HttpServletRequest;
 
 /**
-* @author RQ
-* @description 针对表【picture(图片)】的数据库操作Service
-* @createDate 2025-06-08 21:53:08
-*/
+ * @author RQ
+ * @description 针对表【picture(图片)】的数据库操作Service
+ * @createDate 2025-06-08 21:53:08
+ */
 public interface PictureService extends IService<Picture> {
     /**
      * @description 校验图片信息
@@ -35,24 +35,26 @@ public interface PictureService extends IService<Picture> {
     PictureVO uploadPicture(Object multipartFile,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
-/**
- * @description 分页查询
- * @author RQ
- * @date 2025/6/13 下午3:19
- */
+
+    /**
+     * @description 分页查询
+     * @author RQ
+     * @date 2025/6/13 下午3:19
+     */
     QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
 
- /**
-  * @description 封装图片VO，单条数据脱敏
-  * @author RQ
-  * @date 2025/6/13 下午3:31
-  */
-    PictureVO getPictureVO(Picture picture,  HttpServletRequest request);
-/**
- * @description 封装图片VO，分页数据脱敏
- * @author RQ
- * @date 2025/6/13 下午5:37
- */
+    /**
+     * @description 封装图片VO，单条数据脱敏
+     * @author RQ
+     * @date 2025/6/13 下午3:31
+     */
+    PictureVO getPictureVO(Picture picture, HttpServletRequest request);
+
+    /**
+     * @description 封装图片VO，分页数据脱敏
+     * @author RQ
+     * @date 2025/6/13 下午5:37
+     */
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
 
     /**
@@ -70,31 +72,34 @@ public interface PictureService extends IService<Picture> {
      */
     //设置审核状态
     void setPictureReviewStatus(Picture picture, User loginUser);
-/**
- * @return
- * @description 批量抓取图片
- * @author RQ
- * @date 2025/7/17 上午9:13
- */
+
+    /**
+     * @return
+     * @description 批量抓取图片
+     * @author RQ
+     * @date 2025/7/17 上午9:13
+     */
     int doPictureBatchUpload(PictureByBatchRequest pictureByBatchRequest, User loginUser);
 
-/**
- * @description 分页查询图片cache
- * @author RQ
- * @date 2025/7/19 下午5:28
- */
+    /**
+     * @description 分页查询图片cache
+     * @author RQ
+     * @date 2025/7/19 下午5:28
+     */
     Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
-/**
- * @description 校验空间权限
- * @author RQ
- * @date 2025/8/18 下午1:30
- */
-    void checkSpaceAuth(Picture  picture, User loginUser);
-/**
- * @description 删除图片
- * @author RQ
- * @date 2025/8/18 下午4:55
- */
+
+    /**
+     * @description 校验空间权限
+     * @author RQ
+     * @date 2025/8/18 下午1:30
+     */
+    void checkSpaceAuth(Picture picture, User loginUser);
+
+    /**
+     * @description 删除图片
+     * @author RQ
+     * @date 2025/8/18 下午4:55
+     */
     void deletePicture(Long pictureId, User loginUser);
 
     /**

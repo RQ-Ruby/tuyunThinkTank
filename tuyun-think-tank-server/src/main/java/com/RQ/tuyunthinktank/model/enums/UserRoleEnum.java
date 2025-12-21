@@ -2,9 +2,10 @@ package com.RQ.tuyunthinktank.model.enums;
 
 import cn.hutool.core.util.ObjUtil;
 import lombok.Getter;
+
 /**
- * @description 用户角色枚举
  * @author RQ
+ * @description 用户角色枚举
  * @date 2025/5/31 上午11:27
  */
 @Getter

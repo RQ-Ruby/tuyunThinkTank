@@ -1,9 +1,10 @@
 package com.RQ.tuyunthinktank.exception;
 
 import lombok.Getter;
+
 /**
- * @description 错误码
  * @author RQ
+ * @description 错误码
  * @date 2025/5/25 下午4:26
  */
 @Getter

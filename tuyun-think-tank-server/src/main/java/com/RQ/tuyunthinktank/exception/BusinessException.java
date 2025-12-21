@@ -3,8 +3,8 @@ package com.RQ.tuyunthinktank.exception;
 import lombok.Getter;
 
 /**
- * @description 自定义业务异常
  * @author RQ
+ * @description 自定义业务异常
  * @date 2025/5/25 下午4:26
  */
 @Getter
@@ -17,7 +17,8 @@ public class BusinessException extends RuntimeException {
 
     /**
      * 构造函数
-     * @param code 错误码
+     *
+     * @param code    错误码
      * @param message 异常信息
      */
     public BusinessException(int code, String message) {
@@ -27,6 +28,7 @@ public class BusinessException extends RuntimeException {
 
     /**
      * 构造函数
+     *
      * @param errorCode 错误码枚举
      */
     public BusinessException(ErrorCode errorCode) {
@@ -36,8 +38,9 @@ public class BusinessException extends RuntimeException {
 
     /**
      * 构造函数
+     *
      * @param errorCode 错误码枚举
-     * @param message 自定义异常信息
+     * @param message   自定义异常信息
      */
     public BusinessException(ErrorCode errorCode, String message) {
         super(message);

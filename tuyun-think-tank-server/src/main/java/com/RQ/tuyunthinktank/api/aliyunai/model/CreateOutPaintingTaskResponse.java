@@ -1,15 +1,21 @@
 package com.RQ.tuyunthinktank.api.aliyunai.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateOutPaintingTaskResponse {
 
     private Output output;
+
+    public CreateOutPaintingTaskResponse(Output output, String code, String message, String requestId) {
+        this.output = output;
+        this.code = code;
+        this.message = message;
+        this.requestId = requestId;
+    }
+
+    public CreateOutPaintingTaskResponse() {
+    }
 
     /**
      * 表示任务的输出信息

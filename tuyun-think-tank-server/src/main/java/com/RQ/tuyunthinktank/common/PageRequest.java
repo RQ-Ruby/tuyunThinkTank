@@ -1,9 +1,10 @@
 package com.RQ.tuyunthinktank.common;
 
 import lombok.Data;
+
 /**
- * @description 通用的分页请求类
  * @author RQ
+ * @description 通用的分页请求类
  * @date 2025/5/25 下午4:16
  */
 @Data

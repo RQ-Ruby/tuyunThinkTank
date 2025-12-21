@@ -16,20 +16,20 @@ import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.manage.FileManage;
 import com.RQ.tuyunthinktank.manage.upload.FilePictureUpload;
 import com.RQ.tuyunthinktank.manage.upload.UrlPictureUpload;
+import com.RQ.tuyunthinktank.mapper.PictureMapper;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.RQ.tuyunthinktank.model.dto.picture.*;
+import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.model.entity.Space;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.PictureReviewStatusEnum;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
+import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.service.SpaceService;
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.RQ.tuyunthinktank.model.entity.Picture;
-import com.RQ.tuyunthinktank.service.PictureService;
-import com.RQ.tuyunthinktank.mapper.PictureMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -539,7 +539,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 构建缓存 key
         String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
         String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String cacheKey = "yupicture:listPictureVOByPage:" + hashKey;
+        String cacheKey = "tuyun:listPictureVOByPage:" + hashKey;
 
 
         // 1.先从性能高的本地缓存中查询
@@ -601,46 +601,49 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         }
     }
-/**
- * @description 删除图片
- * @author RQ
- * @date 2025/8/18 下午4:56
- */
-@Override
-public void deletePicture(Long pictureId, User loginUser) {
-    // 1. 基础数据校验
-    Picture oldPicture = this.getById(pictureId);
-    checkSpaceAuth(oldPicture, loginUser); // 验证用户对图片所属空间的操作权限
 
-    // 2. 事务操作（数据库删除 + 额度释放）
-    transactionTemplate.execute(status -> {
-        // 2.1 删除图片元数据
-        boolean result = this.removeById(pictureId);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    /**
+     * @description 删除图片
+     * @author RQ
+     * @date 2025/8/18 下午4:56
+     */
+    @Override
+    public void deletePicture(Long pictureId, User loginUser) {
+        // 1. 基础数据校验
+        Picture oldPicture = this.getById(pictureId);
+        //已经改为使用注解鉴权
+//        checkSpaceAuth(oldPicture, loginUser); // 验证用户对图片所属空间的操作权限
 
-        // 2.2 释放空间额度：减少空间已用容量和文件计数
-        // 注意：额度更新需与删除操作原子化，避免数据不一致
-        Long spaceId = oldPicture.getSpaceId();
-        if (spaceId != null) {
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, spaceId)
-                    .setSql("totalSize = totalSize - " + oldPicture.getPicSize())
-                    .setSql("totalCount = totalCount - 1")
-                    .update();
-            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
-        }
-        return true; // 事务提交点
-    });
+        // 2. 事务操作（数据库删除 + 额度释放）
+        transactionTemplate.execute(status -> {
+            // 2.1 删除图片元数据
+            boolean result = this.removeById(pictureId);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
-    // 3. 异步清理文件（在事务提交后执行）
-    // 说明：分离文件操作与数据库事务，避免分布式文件系统延迟影响事务性能
-    fileManage.clearPictureFile(oldPicture);
-}
-/**
- * @description 创建 AI 扩图任务
- * @author RQ
- * @date 2025/9/26 下午2:01
- */
+            // 2.2 释放空间额度：减少空间已用容量和文件计数
+            // 注意：额度更新需与删除操作原子化，避免数据不一致
+            Long spaceId = oldPicture.getSpaceId();
+            if (spaceId != null) {
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, spaceId)
+                        .setSql("totalSize = totalSize - " + oldPicture.getPicSize())
+                        .setSql("totalCount = totalCount - 1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            }
+            return true; // 事务提交点
+        });
+
+        // 3. 异步清理文件（在事务提交后执行）
+        // 说明：分离文件操作与数据库事务，避免分布式文件系统延迟影响事务性能
+        fileManage.clearPictureFile(oldPicture);
+    }
+
+    /**
+     * @description 创建 AI 扩图任务
+     * @author RQ
+     * @date 2025/9/26 下午2:01
+     */
     @Override
     public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
         // 1. 获取图片 ID 并查询图片数据
@@ -648,8 +651,9 @@ public void deletePicture(Long pictureId, User loginUser) {
         ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片 ID 不能为空");
         Picture picture = this.getById(pictureId);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在，ID: " + pictureId);
+        //已经改为使用注解鉴权
         // 2. 权限校验
-        checkSpaceAuth(picture, loginUser);
+//        checkSpaceAuth(picture, loginUser);
         // 3. 构造 AI 扩图请求参数
         CreateOutPaintingTaskRequest outPaintingRequest = new CreateOutPaintingTaskRequest();
         // 设置输入源：图片 URL

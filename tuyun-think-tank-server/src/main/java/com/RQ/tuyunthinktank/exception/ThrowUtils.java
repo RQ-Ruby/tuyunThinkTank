@@ -1,7 +1,8 @@
 package com.RQ.tuyunthinktank.exception;
+
 /**
- * @description 抛异常工具类
  * @author RQ
+ * @description 抛异常工具类
  * @date 2025/5/25 下午4:27
  */
 public class ThrowUtils {

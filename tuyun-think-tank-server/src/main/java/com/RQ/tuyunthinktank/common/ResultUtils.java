@@ -3,8 +3,8 @@ package com.RQ.tuyunthinktank.common;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 
 /**
- * @description 响应结果工具类
  * @author RQ
+ * @description 响应结果工具类
  * @date 2025/5/25 下午4:18
  */
 public class ResultUtils {

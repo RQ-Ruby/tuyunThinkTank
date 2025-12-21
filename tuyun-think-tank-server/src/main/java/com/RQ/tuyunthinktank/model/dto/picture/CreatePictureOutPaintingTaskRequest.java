@@ -4,9 +4,10 @@ import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskRequest;
 import lombok.Data;
 
 import java.io.Serializable;
+
 /**
- * @description 创建图片扩图任务请求参数
  * @author RQ
+ * @description 创建图片扩图任务请求参数
  * @date 2025/9/22 下午4:44
  */
 @Data

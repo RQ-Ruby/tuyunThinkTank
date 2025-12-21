@@ -41,7 +41,7 @@ public enum SpaceLevelEnum {
      * 根据 value 获取枚举
      */
     public static SpaceLevelEnum getEnumByValue(Integer value) {
-        if (ObjUtil.isEmpty(value)) {
+        if (value == null) {
             return null;
         }
         for (SpaceLevelEnum spaceLevelEnum : SpaceLevelEnum.values()) {

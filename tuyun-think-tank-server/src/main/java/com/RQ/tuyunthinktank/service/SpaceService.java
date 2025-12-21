@@ -59,5 +59,5 @@ public interface SpaceService extends IService<Space> {
      * @author RQ
      * @date 2025/8/4 下午8:11
      */
-    public void fillSpaceBySpace(Space  space);
+    public void fillSpaceBySpace(Space space);
 }

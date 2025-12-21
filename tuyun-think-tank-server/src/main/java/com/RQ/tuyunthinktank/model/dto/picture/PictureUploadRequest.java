@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class PictureUploadRequest implements Serializable {
 
     /**
-     * @description  图片id，如果是修改图片，需要传入图片id
+     * @description 图片id，如果是修改图片，需要传入图片id
      * @param: id
      * @author RQ
      * @date: 2025/6/9 下午5:41
@@ -16,12 +16,12 @@ public class PictureUploadRequest implements Serializable {
     private Long id;
 
     //文件地址
-    private  String url;
+    private String url;
 
     //图片名称
     private String picName;
     //图片空间id
     private Long spaceId;
-  
-    private static final long serialVersionUID = 1L;  
+
+    private static final long serialVersionUID = 1L;
 }

@@ -2,19 +2,19 @@ package com.RQ.tuyunthinktank.service.impl;
 
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
+import com.RQ.tuyunthinktank.manage.auth.StpKit;
 import com.RQ.tuyunthinktank.mapper.SpaceMapper;
+import com.RQ.tuyunthinktank.mapper.UserMapper;
 import com.RQ.tuyunthinktank.model.dto.user.UserQueryRequest;
+import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.LoginUserVO;
 import com.RQ.tuyunthinktank.model.vo.UserVO;
+import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.RQ.tuyunthinktank.model.entity.User;
-import com.RQ.tuyunthinktank.service.UserService;
-import com.RQ.tuyunthinktank.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -25,26 +25,29 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.RQ.tuyunthinktank.constant.UserConstant.USER_LOGIN_STATE;
+
 /**
-* @author RQ
-* @description 针对表【user(用户)】的数据库操作Service实现
-* @createDate 2025-05-31 10:58:26
-*/
+ * @author RQ
+ * @description 针对表【user(用户)】的数据库操作Service实现
+ * @createDate 2025-05-31 10:58:26
+ */
 @Slf4j
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-    implements UserService{
+        implements UserService {
     @Resource
     private SpaceMapper spaceMapper;
-/**
- * @description 用户注册
- * @param userAccount 用户账号
- * @param userPassword 用户密码
- * @param checkPassword 校验密码
- * @return: long
- * @author RQ
- * @date: 2025/5/31 下午3:41
- */
+
+    /**
+     * @param userAccount   用户账号
+     * @param userPassword  用户密码
+     * @param checkPassword 校验密码
+     * @description 用户注册
+     * @return: long
+     * @author RQ
+     * @date: 2025/5/31 下午3:41
+     */
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1.校验
@@ -87,13 +90,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return user.getId();
     }
-/**
- * @description 密码加密
- * @param userPassword 用户密码
- * @return: java.lang.String
- * @author RQ
- * @date: 2025/5/31 下午3:45
- */
+
+    /**
+     * @param userPassword 用户密码
+     * @description 密码加密
+     * @return: java.lang.String
+     * @author RQ
+     * @date: 2025/5/31 下午3:45
+     */
     @Override
     public String getEncryptPassword(String userPassword) {
         // 盐值，混淆密码
@@ -103,15 +107,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //在这个例子中，(SALT + userPassword) 表示将盐值和用户密码拼接在一起，然后计算它们的 MD5 哈希值。
         return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
     }
+
     /**
-     * @description  用户登录
+     * @description 用户登录
      * @return: com.RQ.tuyunthinktank.model.vo.LoginUserVO
      * @author RQ
      * @date: 2025/5/31 下午5:20
      */
     @Override
     public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
-       //1.校验
+        //1.校验
         if (ObjUtil.isEmpty(userAccount) || ObjUtil.isEmpty(userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
@@ -137,16 +142,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LoginUserVO loginUserVO = getLoginUserVO(user);
         //4.记录用户的登录态
         //request.getSession().setAttribute 方法用于将指定的对象存储到当前会话的属性中。
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, loginUserVO);
-        return loginUserVO;
+        request.getSession().setAttribute(USER_LOGIN_STATE, loginUserVO);
+//  记录用户登录态到 Sa-token，便于空间鉴权时使用，注意保证该用户信息与 SpringSession 中的信息过期时间一致
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
+        return this.getLoginUserVO(user);
+
     }
 
-   /**
-    * @description  用户脱敏
-    * @return: com.RQ.tuyunthinktank.model.vo.LoginUserVO
-    * @author RQ
-    * @date: 2025/5/31 下午5:23
-    */
+    /**
+     * @description 用户脱敏
+     * @return: com.RQ.tuyunthinktank.model.vo.LoginUserVO
+     * @author RQ
+     * @date: 2025/5/31 下午5:23
+     */
     @Override
     public LoginUserVO getLoginUserVO(User user) {
         if (user == null) {
@@ -158,7 +167,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
-     * @description  将用户信息封装为 UserVO (脱敏)
+     * @description 将用户信息封装为 UserVO (脱敏)
      * @return: com.RQ.tuyunthinktank.model.vo.UserVO
      * @author RQ
      * @date: 2025/6/2 下午1:11
@@ -172,12 +181,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         BeanUtils.copyProperties(user, userVO);
         return userVO;
     }
-/**
- * @description  将用户信息封装为 UserVO<List>列表 (脱敏)
- * @return: java.util.List<com.RQ.tuyunthinktank.model.vo.UserVO>
- * @author RQ
- * @date: 2025/6/2 下午1:11
- */
+
+    /**
+     * @description 将用户信息封装为 UserVO<List>列表 (脱敏)
+     * @return: java.util.List<com.RQ.tuyunthinktank.model.vo.UserVO>
+     * @author RQ
+     * @date: 2025/6/2 下午1:11
+     */
     @Override
     public List<UserVO> getUserVOList(List<User> user) {
         if (user == null) {
@@ -192,8 +202,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
-     * @description  获取当前登录用户
      * @param request
+     * @description 获取当前登录用户
      * @return: com.RQ.tuyunthinktank.model.entity.User
      * @author RQ
      * @date: 2025/6/1 下午2:58
@@ -201,7 +211,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public User getLoginUser(HttpServletRequest request) {
         //1.先判断是否已登录
-        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         // 修改这里：将强制转换为LoginUserVO
         LoginUserVO currentUser = (LoginUserVO) userObj;
         if (currentUser == null || currentUser.getId() == null) {
@@ -216,12 +226,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return user;
     }
-/**
- * @description   分页查询
- * @return: com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.RQ.tuyunthinktank.model.entity.User>
- * @author RQ
- * @date: 2025/6/2 下午2:11
- */
+
+    /**
+     * @description 分页查询
+     * @return: com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.RQ.tuyunthinktank.model.entity.User>
+     * @author RQ
+     * @date: 2025/6/2 下午2:11
+     */
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
         if (userQueryRequest == null) {
@@ -244,40 +255,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return queryWrapper;
     }
 
-/**
- * @description  用户注销
- * @author RQ
- * @date 2025/6/13 下午3:41
- */
+    /**
+     * @description 用户注销
+     * @author RQ
+     * @date 2025/6/13 下午3:41
+     */
     @Override
     public boolean userLogout(HttpServletRequest request) {
         //1.先判断是否已登录
-        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        if (userObj  == null) {
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
         //2.移除登录态
-        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
     }
-/**
- * @description  是否为管理员
- * @author RQ
- * @date 2025/6/13 下午3:41
- */
-@Override
-public boolean isAdmin(User user) {
-    // 使用短路与运算保证空指针安全
-    return user != null
-            && UserRoleEnum.ADMIN.getValue()  // 获取管理员角色标识
-            .equals(user.getUserRole());  // 比对用户角色字段
-}
+
+    /**
+     * @description 是否为管理员
+     * @author RQ
+     * @date 2025/6/13 下午3:41
+     */
+    @Override
+    public boolean isAdmin(User user) {
+        // 使用短路与运算保证空指针安全
+        return user != null
+                && UserRoleEnum.ADMIN.getValue()  // 获取管理员角色标识
+                .equals(user.getUserRole());  // 比对用户角色字段
+    }
 
     @Override
     public boolean isSpaceCreatorOrAdmin(Long spaceId, User loginUser) {
 
         //检查用户是否为空间创建者或管理员
-        return  isAdmin(loginUser)||
+        return isAdmin(loginUser) ||
                 spaceMapper.selectById(spaceId).getUserId().equals(loginUser.getId());
     }
 

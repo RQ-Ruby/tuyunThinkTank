@@ -3,10 +3,9 @@ package com.RQ.tuyunthinktank.model.dto.space.analyze;
 import lombok.Data;
 
 import java.io.Serializable;
+
 /**
- * @description 空间分析请求
- * @author RQ
- * @date 2025/9/29 上午10:11
+ * 通用空间分析请求
  */
 @Data
 public class SpaceAnalyzeRequest implements Serializable {

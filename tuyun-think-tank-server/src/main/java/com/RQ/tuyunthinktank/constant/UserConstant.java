@@ -1,7 +1,8 @@
 package com.RQ.tuyunthinktank.constant;
+
 /**
- * @description 用户常量
  * @author RQ
+ * @description 用户常量
  * @date 2025/5/31 下午5:12
  */
 public interface UserConstant {

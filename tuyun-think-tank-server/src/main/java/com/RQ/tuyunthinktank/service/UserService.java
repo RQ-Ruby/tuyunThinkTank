@@ -11,43 +11,44 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
-* @author RQ
-* @description 针对表【user(用户)】的数据库操作Service
-* @createDate 2025-05-31 10:58:26
-*/
+ * @author RQ
+ * @description 针对表【user(用户)】的数据库操作Service
+ * @createDate 2025-05-31 10:58:26
+ */
 public interface UserService extends IService<User> {
 
     /**
-     * @description  用户注册
-     * @param userAccount 用户账号
-     * @param userPassword 用户密码
+     * @param userAccount   用户账号
+     * @param userPassword  用户密码
      * @param checkPassword 校验密码
+     * @description 用户注册
      * @return: long
      * @author RQ
      * @date: 2025/5/31 下午3:41
      */
     long userRegister(String userAccount, String userPassword, String checkPassword);
 
-/**
- * @description  密码加密
- * @return: java.lang.String
- * @author RQ
- * @date: 2025/5/31 下午5:36
- */
+    /**
+     * @description 密码加密
+     * @return: java.lang.String
+     * @author RQ
+     * @date: 2025/5/31 下午5:36
+     */
     String getEncryptPassword(String userPassword);
 
-   /**
-    * @description 用户登录
-    * @author RQ
-    * @date 2025/5/31 下午5:18
-    */
+    /**
+     * @description 用户登录
+     * @author RQ
+     * @date 2025/5/31 下午5:18
+     */
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
-/**
- * @description  将用户信息封装为 LoginUserVO(脱敏)
- * @return: com.RQ.tuyunthinktank.model.vo.LoginUserVO
- * @author RQ
- * @date: 2025/5/31 下午5:35
- */
+
+    /**
+     * @description 将用户信息封装为 LoginUserVO(脱敏)
+     * @return: com.RQ.tuyunthinktank.model.vo.LoginUserVO
+     * @author RQ
+     * @date: 2025/5/31 下午5:35
+     */
     LoginUserVO getLoginUserVO(User user);
 
     /**
@@ -58,49 +59,52 @@ public interface UserService extends IService<User> {
      */
     UserVO getUserVO(User user);
 
-/**
- * @description 将用户信息封装为 UserVO<List>列表 (脱敏)
- * @return: java.util.List<com.RQ.tuyunthinktank.model.vo.UserVO>
- * @author RQ
- * @date: 2025/6/2 下午1:09
- */
+    /**
+     * @description 将用户信息封装为 UserVO<List>列表 (脱敏)
+     * @return: java.util.List<com.RQ.tuyunthinktank.model.vo.UserVO>
+     * @author RQ
+     * @date: 2025/6/2 下午1:09
+     */
     List<UserVO> getUserVOList(List<User> user);
-/**
- * @description  获取当前登录用户
- * @param request
- * @return: com.RQ.tuyunthinktank.model.entity.User
- * @author RQ
- * @date: 2025/6/1 下午2:57
- */
+
+    /**
+     * @param request
+     * @description 获取当前登录用户
+     * @return: com.RQ.tuyunthinktank.model.entity.User
+     * @author RQ
+     * @date: 2025/6/1 下午2:57
+     */
     User getLoginUser(HttpServletRequest request);
-/**
- * @description   分页查询
- * @return: com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.RQ.tuyunthinktank.model.entity.User>
- * @author RQ
- * @date: 2025/6/2 下午2:10
- */
+
+    /**
+     * @description 分页查询
+     * @return: com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.RQ.tuyunthinktank.model.entity.User>
+     * @author RQ
+     * @date: 2025/6/2 下午2:10
+     */
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
     /**
-     * @description  用户注销(退出登录)
+     * @description 用户注销(退出登录)
      * @return: boolean
      * @author RQ
      * @date: 2025/6/1 下午3:32
      */
     boolean userLogout(HttpServletRequest request);
 
-/**
- * @description  判断是否为管理员
- * @return: boolean
- * @author RQ
- * @date 2025/6/13 下午3:06
- */
+    /**
+     * @description 判断是否为管理员
+     * @return: boolean
+     * @author RQ
+     * @date 2025/6/13 下午3:06
+     */
     boolean isAdmin(User user);
-/**
- * @description  判断用户是否为空间创建者或管理员
- * @return: boolean
- * @author RQ
- * @date 2025/9/29 上午10:36
- */
+
+    /**
+     * @description 判断用户是否为空间创建者或管理员
+     * @return: boolean
+     * @author RQ
+     * @date 2025/9/29 上午10:36
+     */
     boolean isSpaceCreatorOrAdmin(Long spaceId, User loginUser);
 }

@@ -13,7 +13,6 @@ import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
-import com.RQ.tuyunthinktank.manage.upload.PictureUploadTemplate;
 import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,6 +55,7 @@ public abstract class PictureUploadTemplate {
 
     /**
      * 过滤文件名中的非法字符
+     *
      * @param filename 原始文件名
      * @return 过滤后的文件名
      */
@@ -64,7 +64,7 @@ public abstract class PictureUploadTemplate {
     }
 
     public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix
-                                                   ) {
+    ) {
         //  校验图片有效性（抽象方法）
         validPicture(inputSource);
 
@@ -95,9 +95,9 @@ public abstract class PictureUploadTemplate {
             List<CIObject> objectList = processResults.getObjectList();
             if (CollUtil.isNotEmpty(objectList)) {
                 CIObject compressedCiObject = objectList.get(0);
-                CIObject thumbnailCiObject=compressedCiObject;
+                CIObject thumbnailCiObject = compressedCiObject;
                 if (objectList.size() > 1) {
-                     thumbnailCiObject = objectList.get(1);
+                    thumbnailCiObject = objectList.get(1);
 
                 }
                 return buildResult(originFilename, compressedCiObject, thumbnailCiObject);
@@ -137,13 +137,13 @@ public abstract class PictureUploadTemplate {
      * 子类需实现具体转换逻辑：下载网络图片/复制本地文件等
      *
      * @param inputSource 图片来源
-     * @param tempFile 目标临时文件
+     * @param tempFile    目标临时文件
      * @throws Exception 处理失败时抛出异常
      */
     protected abstract void processFile(Object inputSource, File tempFile) throws Exception;
 
     private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject
-            ,CIObject thumbnailCiObject) {
+            , CIObject thumbnailCiObject) {
         UploadPictureResult result = new UploadPictureResult();
         // 提取图片元信息
         int width = compressedCiObject.getWidth();
@@ -168,9 +168,9 @@ public abstract class PictureUploadTemplate {
      * 构建标准化返回结果
      *
      * @param originFilename 原始文件名
-     * @param file 临时文件对象
-     * @param uploadPath 存储路径
-     * @param imageInfo 图片元信息
+     * @param file           临时文件对象
+     * @param uploadPath     存储路径
+     * @param imageInfo      图片元信息
      * @return 标准化的上传结果
      */
     private UploadPictureResult buildResult(String originFilename, File file,

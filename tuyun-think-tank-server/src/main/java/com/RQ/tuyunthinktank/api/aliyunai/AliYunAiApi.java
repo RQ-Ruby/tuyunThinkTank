@@ -14,15 +14,16 @@ import com.RQ.tuyunthinktank.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 /**
- * @description 阿里云服务交互
  * @author RQ
+ * @description 阿里云服务交互
  * @date 2025/9/22 下午4:23
  */
 @Slf4j  // 使用Lombok注解，自动生成日志记录器
 @Component  // 声明为Spring组件，由Spring容器管理
 public class AliYunAiApi {
-    
+
     // 从配置文件中读取阿里云AI服务的API密钥
     @Value("${aliYunAi.apiKey}")
     private String apiKey;

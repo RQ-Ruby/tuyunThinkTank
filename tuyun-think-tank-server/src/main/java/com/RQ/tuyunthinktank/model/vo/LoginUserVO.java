@@ -6,8 +6,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * @description 脱敏后的用户信息
  * @author RQ
+ * @description 脱敏后的用户信息
  * @date 2025/5/31 下午5:15
  */
 @Data

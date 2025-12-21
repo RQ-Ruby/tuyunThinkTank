@@ -6,11 +6,13 @@ import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 /**
- * @description 图片视图
  * @author RQ
+ * @description 图片视图
  * @date 2025/6/11 上午10:59
  */
 
@@ -85,6 +87,11 @@ public class PictureVO implements Serializable {
      * 用户 id
      */
     private Long userId;
+    /**
+     * 权限列表
+     */
+    private List<String> permissionList = new ArrayList<>();
+
 
     /**
      * 创建时间
@@ -127,11 +134,11 @@ public class PictureVO implements Serializable {
         return picture;
     }
 
-  /**
+    /**
      * @description 将实体对象转换为vo对象
      * @author RQ
      * @date 2025/6/9 下午5:50
-   **/
+     **/
     public static PictureVO objToVo(Picture picture) {
         // 如果传入的实体为空，直接返回null
         if (picture == null) {

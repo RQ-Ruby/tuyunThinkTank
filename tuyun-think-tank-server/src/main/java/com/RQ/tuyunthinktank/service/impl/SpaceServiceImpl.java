@@ -8,14 +8,18 @@ import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.mapper.SpaceMapper;
+import com.RQ.tuyunthinktank.manage.sharding.DynamicShardingManager;
 import com.RQ.tuyunthinktank.model.dto.space.SpaceAddRequest;
 import com.RQ.tuyunthinktank.model.dto.space.SpaceQueryRequest;
 import com.RQ.tuyunthinktank.model.entity.Space;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.SpaceLevelEnum;
+import com.RQ.tuyunthinktank.model.enums.SpaceTypeEnum;
+import com.RQ.tuyunthinktank.model.entity.SpaceUser;
+import com.RQ.tuyunthinktank.model.vo.SpaceRoleEnum;
+import com.RQ.tuyunthinktank.service.SpaceUserService;
 import com.RQ.tuyunthinktank.model.vo.SpaceVO;
 import com.RQ.tuyunthinktank.service.SpaceService;
-
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -46,12 +50,16 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     private UserService userService;
     @Resource
     private TransactionTemplate transactionTemplate;  // 注入Spring的事务模板，用于编程式事务管理[6,7](@ref)
+//    @Resource
+//    private DynamicShardingManager dynamicShardingManager;
+    @Resource
+    private SpaceUserService spaceUserService;
 
     /**
- * @description 添加空间
- * @author RQ
- * @date 2025/8/15 下午7:58
- */
+     * @description 添加空间
+     * @author RQ
+     * @date 2025/8/15 下午7:58
+     */
     @Override
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
         // 将请求参数转换为实体对象
@@ -64,6 +72,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         }
         if (spaceAddRequest.getSpaceLevel() == null) {
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());  // 默认空间级别为"普通"
+        }
+        if(spaceAddRequest.getSpaceType() == null) {
+            space.setSpaceType(0);  // 默认空间类型为"个人空间"
         }
 
         this.fillSpaceBySpace(space);    // 根据空间级别填充额外数据（如权限配置等）
@@ -82,21 +93,36 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         synchronized (lock) {
             // 使用事务模板执行数据库操作（确保原子性）
             Long newSpaceId = transactionTemplate.execute(status -> {
-                // 检查用户是否已有空间（避免重复创建）
-                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
-                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "每个用户仅能有一个私有空间");
+                // 检查用户是否已有空间（避免重复创建）,一个用户只能创建一个私有空间和团队空间
+                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).eq(Space::getSpaceType, space.getSpaceType()).exists();
+                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "每个用户仅能有一个私有空间和一个团队空间");
 
                 // 保存空间数据到数据库
                 boolean result = this.save(space);
                 ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "空间创建失败");
 
+                // 如果是团队空间，创建空间成员记录（创建者为管理员）
+                if (SpaceTypeEnum.TEAM.getValue() == spaceAddRequest.getSpaceType()) {
+                    SpaceUser spaceUser = new SpaceUser();
+                    spaceUser.setSpaceId(space.getId());
+                    spaceUser.setUserId(userId);
+                    spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                    result = spaceUserService.save(spaceUser);
+                    ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建团队成员记录失败");
+                }
+
                 return space.getId();  // 返回新空间的ID
             });
 
             // 处理事务执行结果：若返回null则转为-1（表示失败）
-            return Optional.ofNullable(newSpaceId).orElse(-1L);
+            Long spaceId = Optional.ofNullable(newSpaceId).orElse(-1L);
+//            if (spaceId != -1L) {
+//                dynamicShardingManager.createSpacePictureTable(space);
+//            }
+            return spaceId;
         }
     }
+
     /**
      * @description 校验空间
      * @author RQ
@@ -109,12 +135,15 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
         String spaceName = space.getSpaceName();
         Integer spaceLevel = space.getSpaceLevel();
-
         SpaceLevelEnum enumByValue = SpaceLevelEnum.getEnumByValue(spaceLevel);
+        //新增空间类型校验
+        Integer spaceType = space.getSpaceType();
+
         // 2. 添加时，参数校验
         if (add) {
             ThrowUtils.throwIf(StrUtil.isBlank(spaceName), ErrorCode.PARAMS_ERROR, "空间名称不能为空");
             ThrowUtils.throwIf(enumByValue == null, ErrorCode.PARAMS_ERROR, "空间等级错误");
+            ThrowUtils.throwIf(spaceType == null || (spaceType != 0 && spaceType != 1), ErrorCode.PARAMS_ERROR, "空间类型错误");
 
         }
         // 3.修改数据时，如果要改空间级别
@@ -197,7 +226,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         String sortField = spaceQueryRequest.getSortField();
         // 排序方向
         String sortOrder = spaceQueryRequest.getSortOrder();
-
+        Integer spaceType = spaceQueryRequest.getSpaceType();
+        //  空间类型查询
+        queryWrapper.eq(ObjUtil.isNotEmpty(spaceType), "spaceType", spaceType);
         queryWrapper.eq(ObjUtil.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjUtil.isNotEmpty(userId), "userId", userId);
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceLevel), "spaceLevel", spaceLevel);
@@ -213,19 +244,20 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
         return queryWrapper;
     }
-/**
- * @description 填充空间信息
- * @author RQ
- * @date 2025/8/4 下午8:32
- */
+
+    /**
+     * @description 填充空间信息
+     * @author RQ
+     * @date 2025/8/4 下午8:32
+     */
     @Override
     public void fillSpaceBySpace(Space space) {
         SpaceLevelEnum spaceLevelEnum = SpaceLevelEnum.getEnumByValue(space.getSpaceLevel());
         //判断空间等级是否存在
-        if(spaceLevelEnum!= null) {
+        if (spaceLevelEnum != null) {
             //设置空间大小和数量
             //默认空间大小和数量为空（管理员未未设置），则默认为等级对应的值
-            if(space.getMaxSize() == null){
+            if (space.getMaxSize() == null) {
                 space.setMaxSize(spaceLevelEnum.getMaxSize());
             }
             if (space.getMaxCount() == null) {

@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.util.Date;
-
-import lombok.Data;
 
 /**
  * 空间
@@ -33,6 +32,11 @@ public class Space {
      * 空间级别：0-普通版 1-专业版 2-旗舰版
      */
     private Integer spaceLevel;
+
+    /**
+     * 空间类型：0-个人空间 1-团队空间
+     */
+    private Integer spaceType;
 
     /**
      * 空间图片的最大总大小

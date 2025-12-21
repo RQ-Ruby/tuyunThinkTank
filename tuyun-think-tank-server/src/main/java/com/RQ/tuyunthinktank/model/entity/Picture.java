@@ -1,15 +1,16 @@
 package com.RQ.tuyunthinktank.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 图片
+ *
  * @TableName picture
  */
-@TableName(value ="picture")
+@TableName(value = "picture")
 @Data
 public class Picture {
     /**
@@ -28,6 +29,11 @@ public class Picture {
      * 缩略图 url
      */
     private String thumbnailUrl;
+
+    /**
+     * 空间类型
+     */
+    private String spaceType;
 
     /**
      * 图片名称
