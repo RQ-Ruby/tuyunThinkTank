@@ -113,6 +113,11 @@ public class Picture {
     private Integer isDelete;
 
     /**
+     * 是否为草稿：0-已发布; 1-草稿
+     */
+    private Integer isDraft;
+
+    /**
      * 状态：0-待审核; 1-通过; 2-拒绝
      */
     private Integer reviewStatus;

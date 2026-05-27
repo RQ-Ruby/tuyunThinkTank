@@ -20,7 +20,7 @@
             <a-tag v-if="isValidSize" color="green">尺寸符合要求</a-tag>
             <a-tag v-else color="red">尺寸不符合要求</a-tag>
             <div class="tips-text">
-              支持尺寸：512px-4096px，长宽比不超过4:1
+              支持尺寸：宽高均需在512px-4096px之间
             </div>
           </div>
         </div>
@@ -110,12 +110,6 @@ const isValidSize = computed(() => {
     return false
   }
 
-  // 检查长宽比
-  const aspectRatio = Math.max(picWidth, picHeight) / Math.min(picWidth, picHeight)
-  if (aspectRatio > 4) {
-    return false
-  }
-
   return true
 })
 
@@ -135,20 +129,9 @@ const handleGenerate =async ()  =>{
     return
   }
 
-  // 图片尺寸验证 - 根据AI扩图服务的要求
-  const minSize = 512 // 最小尺寸512px
-  const maxSize = 4096 // 最大尺寸4096px
-
-  if (picWidth < minSize || picHeight < minSize || picWidth > maxSize || picHeight > maxSize) {
-    message.error(`图片尺寸不符合要求，请上传尺寸在${minSize}px到${maxSize}px之间的图片。当前尺寸：${picWidth}x${picHeight}px`)
-    return
-  }
-
-  // 检查图片比例 - 避免过于极端的长宽比
-  const aspectRatio = Math.max(picWidth, picHeight) / Math.min(picWidth, picHeight)
-
-  if (aspectRatio > 4) {
-    message.error(`图片长宽比过于极端（${aspectRatio.toFixed(1)}:1），建议使用长宽比不超过4:1的图片`)
+  // 尺寸校验（阿里云 DashScope 扩图服务强制要求宽高均在 512-4096px）
+  if (picWidth < 512 || picHeight < 512 || picWidth > 4096 || picHeight > 4096) {
+    message.error(`图片尺寸不符合要求，宽高均需在512px到4096px之间。当前尺寸：${picWidth}×${picHeight}px`)
     return
   }
 
@@ -182,7 +165,8 @@ const handleGenerate =async ()  =>{
       loading.value = false
     }
   } catch (error) {
-    message.error('创建扩图任务失败，请检查网络连接或稍后重试')
+    const errMsg = (error as any)?.response?.data?.message || (error as any)?.message || '请检查网络连接或稍后重试'
+    message.error('创建扩图任务失败：' + errMsg)
     loading.value = false
   }
 }

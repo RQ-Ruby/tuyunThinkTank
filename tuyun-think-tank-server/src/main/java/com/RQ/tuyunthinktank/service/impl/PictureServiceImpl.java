@@ -205,6 +205,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setName(picName);
         // 设置空间ID
         picture.setSpaceId(spaceId);
+        // 新上传的图片标记为草稿（更新已有图片时不改变草稿状态）
+        if (id == null) {
+            picture.setIsDraft(1);
+        }
         //7.设置审核状态
         setPictureReviewStatus(picture, loginUser);
         // 开启事务
@@ -326,6 +330,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 queryWrapper.like("tags", "\"" + tag + "\"");
             }
         }
+
+        // 默认过滤草稿图片（只显示已发布的图片）
+        queryWrapper.and(qw -> qw.eq("isDraft", 0).or().isNull("isDraft"));
 
         // 添加排序条件（支持升序/降序）
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),
@@ -500,6 +507,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             try {
                 pictureUploadRequest.setPicName(picName + uploadCount + 1);
                 PictureVO pictureVO = this.uploadPicture(imgUrl, pictureUploadRequest, loginUser);
+                // 批量上传的图片直接发布（不需要草稿状态）
+                this.lambdaUpdate().eq(Picture::getId, pictureVO.getId()).set(Picture::getIsDraft, 0).update();
                 log.info("图片上传成功, id = {}", pictureVO.getId());
                 uploadCount++;  // 成功计数
             } catch (Exception e) {

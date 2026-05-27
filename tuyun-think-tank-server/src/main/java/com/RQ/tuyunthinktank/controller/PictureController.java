@@ -307,10 +307,12 @@ public class PictureController {
         pictureService.validPicture(picture);
         //4.补充审核参数
         pictureService.setPictureReviewStatus(picture, loginUser);
+        // 5. 将图片从草稿状态发布为正式图片
+        picture.setIsDraft(0);
         //已经改为使用注解鉴权
         // 空间权限校验
 //        pictureService.checkSpaceAuth(picture, loginUser);
-        // 5. 操作数据库
+        // 6. 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
 
