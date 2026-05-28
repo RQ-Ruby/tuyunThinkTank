@@ -2,12 +2,19 @@ package com.RQ.tuyunthinktank.manage;
 
 import cn.hutool.core.io.FileUtil;
 import com.RQ.tuyunthinktank.config.CosClientConfig;
+import com.RQ.tuyunthinktank.exception.BusinessException;
+import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIUploadResult;
+import com.qcloud.cos.model.ciModel.common.ImageProcessRequest;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
+import com.qcloud.cos.transfer.TransferManager;
+import com.qcloud.cos.transfer.Upload;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -21,6 +28,7 @@ import java.util.List;
  * 用于存放通用的对象存储操作，如上传、下载、删除等
  * @date 2025/5/25 下午4:26
  */
+@Slf4j
 @Component
 public class SaveManage {
 
@@ -29,6 +37,15 @@ public class SaveManage {
 
     @Resource
     private COSClient cosClient;
+
+    @Resource
+    private TransferManager transferManager;
+
+    /**
+     * 分片上传阈值：5MB
+     * 超过此大小的文件将自动使用分片上传
+     */
+    public static final long MULTIPART_THRESHOLD = 5 * 1024 * 1024L;
 
     /**
      * @param key  存储在腾讯云cos的key
@@ -122,5 +139,73 @@ public class SaveManage {
         return cosClient.putObject(putObjectRequest);
     }
 
+    /**
+     * 使用 TransferManager 上传文件（支持分片上传和断点续传）
+     * 大文件自动分片上传，失败支持断点续传
+     * 源于: https://cloud.tencent.com/document/product/436/65935
+     *
+     * @param key  对象存储中的文件路径
+     * @param file 待上传的本地文件
+     */
+    public void putObjectByTransferManager(String key, File file) {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(
+                cosClientConfig.getBucket(), key, file);
+        // TransferManager 会根据文件大小和阈值配置自动选择简单上传或分片上传
+        // 分片上传内部实现：initiate → upload parts → complete，天然支持断点续传
+        Upload upload = transferManager.upload(putObjectRequest);
+        try {
+            // 同步等待上传完成
+            upload.waitForUploadResult();
+            log.info("TransferManager 文件上传成功 | key={} | size={}MB",
+                    key, String.format("%.2f", file.length() / 1024.0 / 1024.0));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件上传被中断");
+        } catch (Exception e) {
+            log.error("TransferManager 文件上传失败 | key={} | error={}", key, e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件分片上传失败: " + e.getMessage());
+        }
+    }
 
+    /**
+     * 对已上传的图片进行持久化处理（WebP 转码 + 缩略图生成）
+     * 用于大文件经 TransferManager 分片上传后的图片后处理
+     *
+     * @param key  已上传图片在 COS 中的路径
+     * @param file 本地文件（用于判断是否需要生成缩略图）
+     * @return CI 处理结果，包含图片信息和处理后的对象列表
+     */
+    public CIUploadResult processUploadedPicture(String key, File file) {
+        ImageProcessRequest imageProcessRequest = new ImageProcessRequest(
+                cosClientConfig.getBucket(), key);
+
+        PicOperations picOperations = new PicOperations();
+        picOperations.setIsPicInfo(1);
+        List<PicOperations.Rule> picOperationList = new ArrayList<>();
+
+        // 1. WebP 转码规则
+        String newKey = FileUtil.mainName(key) + ".webp";
+        PicOperations.Rule rule = new PicOperations.Rule();
+        rule.setRule("imageMogr2/format/webp");
+        rule.setBucket(cosClientConfig.getBucket());
+        rule.setFileId(newKey);
+        picOperationList.add(rule);
+
+        // 2. 缩略图规则（仅对 > 30KB 的图片生成缩略图）
+        if (file.length() > 30 * 1024) {
+            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+            thumbnailRule.setBucket(cosClientConfig.getBucket());
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail.webp";
+            thumbnailRule.setFileId(thumbnailKey);
+            String r = String.format(
+                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/webp/sharp/100", 400, 400
+            );
+            thumbnailRule.setRule(r);
+            picOperationList.add(thumbnailRule);
+        }
+
+        picOperations.setRules(picOperationList);
+        imageProcessRequest.setPicOperations(picOperations);
+        return cosClient.processImage(imageProcessRequest);
+    }
 }

@@ -11,6 +11,7 @@ import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.manage.SaveManage;
 import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIUploadResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
 import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
@@ -87,11 +88,17 @@ public abstract class PictureUploadTemplate {
             //  处理输入源→写入临时文件（抽象方法）
             processFile(inputSource, tempFile);
 
-            //  上传到对象存储
-            PutObjectResult putObjectResult = cosManager.putPicture(uploadPath, tempFile);
-            ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+            CIUploadResult ciUploadResult;
+            if (tempFile.length() > SaveManage.MULTIPART_THRESHOLD) {
+                cosManager.putObjectByTransferManager(uploadPath, tempFile);
+                ciUploadResult = cosManager.processUploadedPicture(uploadPath, tempFile);
+            } else {
+                PutObjectResult putObjectResult = cosManager.putPicture(uploadPath, tempFile);
+                ciUploadResult = putObjectResult.getCiUploadResult();
+            }
+            ImageInfo imageInfo = ciUploadResult.getOriginalInfo().getImageInfo();
             //获得处理后的图片信息
-            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            ProcessResults processResults = ciUploadResult.getProcessResults();
             List<CIObject> objectList = processResults.getObjectList();
             if (CollUtil.isNotEmpty(objectList)) {
                 CIObject compressedCiObject = objectList.get(0);

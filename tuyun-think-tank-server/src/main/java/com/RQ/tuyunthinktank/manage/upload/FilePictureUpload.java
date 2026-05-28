@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 public class FilePictureUpload extends PictureUploadTemplate {
     // 常量定义（提高可维护性）
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 100MB限制
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024L; // 100MB限制
     private static final List<String> ALLOWED_EXTENSIONS =
             Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
 
@@ -33,7 +33,7 @@ public class FilePictureUpload extends PictureUploadTemplate {
         // 2. 文件大小校验
         long fileSize = multipartFile.getSize();
         ThrowUtils.throwIf(fileSize > MAX_FILE_SIZE,
-                ErrorCode.PARAMS_ERROR, "文件大小不能超过10MB");
+                ErrorCode.PARAMS_ERROR, "文件大小不能超过20MB");
 
         // 3. 文件格式校验
         String originalFilename = multipartFile.getOriginalFilename();
