@@ -140,6 +140,11 @@ public class SpaceUserController {
         List<SpaceUser> spaceUserList = spaceUserService.list(
                 spaceUserService.getQueryWrapper(spaceUserQueryRequest)
         );
-        return ResultUtils.success(spaceUserService.getSpaceUserVOList(spaceUserList));
+        List<SpaceUserVO> voList = spaceUserService.getSpaceUserVOList(spaceUserList);
+        // 过滤掉空间已删除的孤立成员记录（防止前端显示无名团队）
+        voList = voList.stream()
+                .filter(vo -> vo.getSpace() != null && vo.getSpace().getId() != null)
+                .collect(java.util.stream.Collectors.toList());
+        return ResultUtils.success(voList);
     }
 }

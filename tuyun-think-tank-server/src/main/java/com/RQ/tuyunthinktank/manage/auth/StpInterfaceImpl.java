@@ -138,7 +138,9 @@ public class  StpInterfaceImpl implements StpInterface {
         // 获取 Space 对象
         Space space = spaceService.getById(spaceId);
         if (space == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "未找到空间信息");
+            // 空间不存在（可能已被删除或前端传错 id），不抛 500，
+            // 直接返回空权限让 Sa-Token 走"无权限"流程
+            return new ArrayList<>();
         }
         // 根据 Space 类型判断权限
         if (space.getSpaceType() == SpaceTypeEnum.PRIVATE.getValue()) {

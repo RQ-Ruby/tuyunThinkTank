@@ -64,11 +64,18 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
         Long spaceId = spaceUser.getSpaceId();
         Long userId = spaceUser.getUserId();
         if (add) {
-            ThrowUtils.throwIf(ObjectUtil.hasEmpty(spaceId, userId), ErrorCode.PARAMS_ERROR);
+            ThrowUtils.throwIf(spaceId == null || spaceId <= 0, ErrorCode.PARAMS_ERROR, "空间 id 不能为空");
+            ThrowUtils.throwIf(userId == null || userId <= 0, ErrorCode.PARAMS_ERROR, "用户 id 不能为空");
             User user = userService.getById(userId);
             ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR, "用户不存在");
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            // 防止重复添加同一用户
+            boolean exists = this.lambdaQuery()
+                    .eq(SpaceUser::getSpaceId, spaceId)
+                    .eq(SpaceUser::getUserId, userId)
+                    .exists();
+            ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "该用户已是空间成员");
         }
         // 校验空间角色
         String spaceRole = spaceUser.getSpaceRole();

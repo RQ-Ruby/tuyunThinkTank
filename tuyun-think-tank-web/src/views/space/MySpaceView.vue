@@ -37,9 +37,10 @@ const redirectToUserSpace = async () => {
       return
     }
 
-    // 请求用户空间列表（仅取第一页第一条）
+    // 请求用户私有空间列表（仅取第一页第一条）
     const response = await listSpaceVoByPageUsingPost({
       userId: loginUser.id,
+      spaceType: 0,
       current: 1,
       pageSize: 1,
     })

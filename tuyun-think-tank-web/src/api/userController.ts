@@ -134,3 +134,18 @@ export async function updateUserUsingPost(
     ...(options || {}),
   })
 }
+
+/** searchUserByAccount POST /api/user/search/account */
+export async function searchUserByAccountUsingPost(
+  body: API.UserQueryRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseUserVO_>('/api/user/search/account', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}

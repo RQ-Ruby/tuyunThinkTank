@@ -1,9 +1,9 @@
 <template>
   <div id="addSpaceView">
     <div style="margin-bottom: 24px">
-      <h2>{{ route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队' : '创建空间' }}</h2>
+      <h2>{{ isEdit ? '编辑空间' : route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队' : '创建空间' }}</h2>
       <div style="color: #666; margin-top: 8px">
-        {{ route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队空间，邀请成员共同协作管理图片' : '创建个人空间，管理您的私有图片资源' }}
+        {{ isEdit ? '修改空间基础信息' : route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队空间，邀请成员共同协作管理图片' : '创建个人空间，管理您的私有图片资源' }}
       </div>
     </div>
 
@@ -33,7 +33,7 @@
 
         <a-form-item>
           <a-button type="primary" html-type="submit" :loading="loading" style="width: 100%">
-            立即创建
+            {{ isEdit ? '保存修改' : '立即创建' }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -42,15 +42,21 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { addSpaceUsingPost } from '@/api/spaceController'
+import {
+  addSpaceUsingPost,
+  getSpaceByIdUsingGet,
+  updateSpaceUsingPost,
+} from '@/api/spaceController'
 import { SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM } from '@/constants/space'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
+const spaceId = computed(() => route.params.id as string | undefined)
+const isEdit = computed(() => !!spaceId.value)
 
 const formData = reactive<API.SpaceAddRequest>({
   spaceName: '',
@@ -58,16 +64,52 @@ const formData = reactive<API.SpaceAddRequest>({
   spaceType: undefined,
 })
 
-onMounted(() => {
+onMounted(async () => {
+  if (isEdit.value && spaceId.value) {
+    await fetchSpaceDetail(spaceId.value)
+    return
+  }
   const type = Number(route.query.type)
   if (!isNaN(type)) {
     formData.spaceType = type
   }
 })
 
+const fetchSpaceDetail = async (id: string) => {
+  loading.value = true
+  try {
+    const res = await getSpaceByIdUsingGet({ id })
+    if (res.data.code === 0 && res.data.data) {
+      formData.spaceName = res.data.data.spaceName
+      formData.spaceLevel = res.data.data.spaceLevel
+      formData.spaceType = res.data.data.spaceType
+    } else {
+      message.error('获取空间信息失败，' + res.data.message)
+    }
+  } catch (error: any) {
+    message.error('获取空间信息失败，' + error.message)
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleSubmit = async (values: API.SpaceAddRequest) => {
   loading.value = true
   try {
+    if (isEdit.value && spaceId.value) {
+      const res = await updateSpaceUsingPost({
+        id: spaceId.value,
+        ...formData,
+        ...values,
+      })
+      if (res.data.code === 0) {
+        message.success('修改成功')
+        router.push('/admin/spaceManage')
+      } else {
+        message.error('修改失败，' + res.data.message)
+      }
+      return
+    }
     const res = await addSpaceUsingPost({
       ...formData,
       ...values,
@@ -79,7 +121,7 @@ const handleSubmit = async (values: API.SpaceAddRequest) => {
       message.error('创建失败，' + res.data.message)
     }
   } catch (error: any) {
-    message.error('创建失败，' + error.message)
+    message.error((isEdit.value ? '修改失败，' : '创建失败，') + error.message)
   } finally {
     loading.value = false
   }

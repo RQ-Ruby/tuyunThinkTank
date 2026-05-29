@@ -21,6 +21,15 @@
           allow-clear
         />
       </a-form-item>
+      <a-form-item name="spaceType" label="空间类型">
+        <a-select
+          v-model:value="searchParams.spaceType"
+          style="min-width: 180px"
+          placeholder="请选择空间类型"
+          :options="SPACE_TYPE_OPTIONS"
+          allow-clear
+        />
+      </a-form-item>
       <a-form-item label="用户 id">
         <a-input v-model:value="searchParams.userId" placeholder="请输入用户 id" allow-clear />
       </a-form-item>
@@ -37,6 +46,9 @@
       @change="doTableChange"
     >
       <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'spaceType'">
+          <div>{{ SPACE_TYPE_MAP[record.spaceType] ?? '未知' }}</div>
+        </template>
         <template v-if="column.dataIndex === 'spaceLevel'">
           <div>{{ SPACE_LEVEL_MAP[record.spaceLevel] }}</div>
         </template>
@@ -52,7 +64,7 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space wrap>
-            <a-button type="link" :href="`/add_space?id=${record.id}`" target="_blank">
+            <a-button type="link" :href="`/space/edit/${record.id}`" target="_blank">
               编辑
             </a-button>
             <a-button danger @click="doDelete(record.id)">删除</a-button>
@@ -67,7 +79,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { deleteSpaceUsingPost, listSpaceByPageUsingPost } from '@/api/spaceController.ts'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS } from '@/constants/space.ts'
+import { SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS, SPACE_TYPE_MAP, SPACE_TYPE_OPTIONS } from '@/constants/space.ts'
 import { formatSize } from '@/util'
 
 
@@ -80,6 +92,10 @@ const columns = [
   {
     title: '空间名称',
     dataIndex: 'spaceName',
+  },
+  {
+    title: '空间类型',
+    dataIndex: 'spaceType',
   },
   {
     title: '空间级别',

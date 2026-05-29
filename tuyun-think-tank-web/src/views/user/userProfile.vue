@@ -23,7 +23,14 @@
               <a-col :span="18">
                 <a-descriptions :column="1" size="middle">
                   <a-descriptions-item label="用户名">{{ profile.userName }}</a-descriptions-item>
-                  <a-descriptions-item label="账号">{{ profile.userAccount }}</a-descriptions-item>
+                  <a-descriptions-item label="账号">
+                    <a-space>
+                      <span>{{ profile.userAccount }}</span>
+                      <a-tooltip title="复制后可发送给团队管理员，邀请你加入团队空间">
+                        <a-button size="small" @click="copyUserAccount">复制账号</a-button>
+                      </a-tooltip>
+                    </a-space>
+                  </a-descriptions-item>
                   <a-descriptions-item label="身份">{{ roleLabel }}</a-descriptions-item>
                   <a-descriptions-item label="简介">{{ profile.userProfile || '（空）' }}</a-descriptions-item>
                   <a-descriptions-item label="创建时间">{{ formattedCreateTime }}</a-descriptions-item>
@@ -210,6 +217,32 @@ const handleSave = async () => {
 
 const handleCancel = () => {
   open.value = false
+}
+
+// 复制我的账号
+const copyUserAccount = async () => {
+  const account = profile.userAccount
+  if (!account) {
+    message.warning('账号暂未加载')
+    return
+  }
+  const text = String(account)
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // 兼容老浏览器 / 非 https
+      const input = document.createElement('textarea')
+      input.value = text
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    message.success('已复制账号')
+  } catch (e: any) {
+    message.error('复制失败：' + e.message)
+  }
 }
 
 // 初始化数据

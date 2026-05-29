@@ -128,7 +128,7 @@ const doReview = async (reviewStatus: number) => {
 }
 
 
-/*判断是否是管理员或者是是图片作者*/
+/*判断是否具有编辑权限（基于权限列表）*/
 const loginUserStore = useLoginUserStore()
 // 是否具有编辑权限
 const canEdit = computed(() => {
@@ -137,7 +137,12 @@ const canEdit = computed(() => {
   if (!loginUser.id) {
     return false
   }
-  // 仅本人或管理员可编辑
+  // 优先使用权限列表（团队空间 / 私有空间）
+  const permissionList = picture.value.permissionList ?? []
+  if (permissionList.length > 0) {
+    return permissionList.includes('picture:edit')
+  }
+  // 公共图库：仅本人或管理员可编辑
   const user = picture.value.user || {}
   return loginUser.id === user.id || loginUser.userRole === 'admin'
 })

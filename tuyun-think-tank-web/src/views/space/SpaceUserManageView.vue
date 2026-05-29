@@ -3,17 +3,25 @@
     <a-flex justify="space-between">
       <h2>空间成员管理</h2>
       <a-space>
-        <a-button type="primary" href="/add_space" target="_blank">+ 创建空间</a-button>
+        <a-button :href="`/space/${id}`">返回空间</a-button>
       </a-space>
     </a-flex>
     <div style="margin-bottom: 16px" />
     <!-- 添加成员表单 -->
     <a-form layout="inline" :model="formData" @finish="handleSubmit">
-      <a-form-item label="用户 id" name="userId">
-        <a-input v-model:value="formData.userId" placeholder="请输入用户 id" allow-clear />
+      <a-form-item
+        label="用户账号"
+        name="userAccount"
+        :rules="[{ required: true, message: '请输入用户账号' }]"
+      >
+        <a-input
+          v-model:value="formData.userAccount"
+          placeholder="请输入对方账号"
+          allow-clear
+        />
       </a-form-item>
       <a-form-item>
-        <a-button type="primary" html-type="submit">添加用户</a-button>
+        <a-button type="primary" html-type="submit" :loading="loading">添加用户</a-button>
       </a-form-item>
     </a-form>
     <div style="margin-bottom: 16px" />
@@ -55,6 +63,7 @@ import {
   editSpaceUserUsingPost,
   listSpaceUserUsingPost,
 } from '@/api/spaceUserController.ts'
+import { searchUserByAccountUsingPost } from '@/api/userController'
 import dayjs from 'dayjs'
 
 interface Props {
@@ -84,6 +93,7 @@ const columns = [
 
 // 定义数据
 const dataList = ref<API.SpaceUserVO[]>([])
+const loading = ref(false)
 
 // 获取数据
 const fetchData = async () => {
@@ -107,7 +117,9 @@ onMounted(() => {
 })
 
 // 添加成员表单
-const formData = reactive<API.SpaceUserAddRequest>({})
+const formData = reactive<API.SpaceUserAddRequest>({
+  userAccount: undefined,
+})
 
 // 创建成员
 const handleSubmit = async () => {
@@ -115,16 +127,35 @@ const handleSubmit = async () => {
   if (!spaceId) {
     return
   }
-  const res = await addSpaceUserUsingPost({
-    spaceId,
-    ...formData,
-  })
-  if (res.data.code === 0) {
-    message.success('添加成功')
-    // 刷新数据
-    fetchData()
-  } else {
-    message.error('添加失败，' + res.data.message)
+  if (!formData.userAccount) {
+    message.error('请输入用户账号')
+    return
+  }
+  loading.value = true
+  try {
+    const searchRes = await searchUserByAccountUsingPost({
+      userAccount: formData.userAccount,
+    })
+    if (searchRes.data.code !== 0 || !searchRes.data.data?.id) {
+      message.error('未找到该账号对应的用户')
+      return
+    }
+    const res = await addSpaceUserUsingPost({
+      spaceId,
+      userId: searchRes.data.data.id,
+      spaceRole: formData.spaceRole,
+    })
+    if (res.data.code === 0) {
+      message.success('添加成功')
+      formData.userAccount = undefined
+      fetchData()
+    } else {
+      message.error('添加失败，' + res.data.message)
+    }
+  } catch (e: any) {
+    message.error('添加失败：' + e.message)
+  } finally {
+    loading.value = false
   }
 }
 

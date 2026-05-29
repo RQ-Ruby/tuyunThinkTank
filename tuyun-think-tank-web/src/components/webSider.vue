@@ -142,16 +142,18 @@ const doMenuClick = ({ key }: { key: string }) => {
 }
 const teamSpaceList = ref<API.SpaceUserVO[]>([])
 const menuItems = computed(() => {
-  // 展示团队空间分组
-  const teamSpaceSubMenus = teamSpaceList.value.map((spaceUser) => {
-    const space = spaceUser.space
-    return {
-      key: '/space/' + spaceUser.spaceId,
-      label: space?.spaceName,
-      icon: TeamOutlined,
-      isTeamSpace: true,
-    }
-  })
+  // 展示团队空间分组（过滤掉空间已删除或无名的残留项）
+  const teamSpaceSubMenus = teamSpaceList.value
+    .filter((spaceUser) => spaceUser.space && spaceUser.space.id && spaceUser.space.spaceName)
+    .map((spaceUser) => {
+      const space = spaceUser.space
+      return {
+        key: '/space/' + spaceUser.spaceId,
+        label: space?.spaceName,
+        icon: TeamOutlined,
+        isTeamSpace: true,
+      }
+    })
 
   // 扁平化处理，将团队空间插入到创建团队后面
   return fixedMenuItems.reduce((acc, item) => {

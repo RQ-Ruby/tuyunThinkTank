@@ -199,5 +199,22 @@ public class UserController {
         return ResultUtils.success(userVOPage);
     }
 
+    /**
+     * 根据账号查询用户（用于团队空间添加成员）
+     * 登录用户可用
+     */
+    @PostMapping("/search/account")
+    public BaseResponse<UserVO> searchUserByAccount(@RequestBody UserQueryRequest userQueryRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        String userAccount = userQueryRequest.getUserAccount();
+        ThrowUtils.throwIf(userAccount == null || userAccount.trim().isEmpty(), ErrorCode.PARAMS_ERROR, "账号不能为空");
+        // 查询用户
+        User user = userService.lambdaQuery()
+                .eq(User::getUserAccount, userAccount.trim())
+                .one();
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR, "未找到该账号对应的用户");
+        return ResultUtils.success(userService.getUserVO(user));
+    }
+
 
 }

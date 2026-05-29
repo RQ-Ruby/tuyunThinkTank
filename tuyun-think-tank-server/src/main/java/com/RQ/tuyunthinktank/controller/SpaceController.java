@@ -11,11 +11,13 @@ import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.manage.auth.SpaceUserAuthManager;
 import com.RQ.tuyunthinktank.model.dto.space.*;
 import com.RQ.tuyunthinktank.model.entity.Space;
+import com.RQ.tuyunthinktank.model.entity.SpaceUser;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.SpaceLevelEnum;
 import com.RQ.tuyunthinktank.model.enums.UserRoleEnum;
 import com.RQ.tuyunthinktank.model.vo.SpaceVO;
 import com.RQ.tuyunthinktank.service.SpaceService;
+import com.RQ.tuyunthinktank.service.SpaceUserService;
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,8 @@ public class SpaceController {
     private SpaceService spaceService;
     @Resource
     private UserService userService;
+    @Resource
+    private SpaceUserService spaceUserService;
     @Resource
     private SpaceUserAuthManager spaceUserAuthManager;
 
@@ -113,6 +117,10 @@ public class SpaceController {
         // 5. 执行删除并校验结果
         boolean result = spaceService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "空间删除失败");
+        // 6. 级联删除空间成员记录（团队空间）
+        spaceUserService.lambdaUpdate()
+                .eq(SpaceUser::getSpaceId, id)
+                .remove();
 
         log.info("空间删除成功 ID:{} 操作者:{}", id, loginUser.getId());
         return ResultUtils.success(true);

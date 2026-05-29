@@ -4,8 +4,20 @@
     <a-flex justify="space-between">
       <h2>{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h2>
       <a-space size="middle">
-        <a-button type="primary" :href="`/add_picture?spaceId=${id}`" target="_blank">
+        <a-button
+          v-if="canUpload"
+          type="primary"
+          :href="`/add_picture?spaceId=${id}`"
+          target="_blank"
+        >
           + 创建图片
+        </a-button>
+        <a-button
+          v-if="canManageUser"
+          :href="`/spaceUserManage/${id}`"
+          target="_blank"
+        >
+          成员管理
         </a-button>
         <a-tooltip
           :title="`占用空间 ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
@@ -23,7 +35,7 @@
     <PictureSearchForm :onSearch="onSearch" />
     <div style="margin-bottom: 16px" />
     <!-- 图片列表 -->
-    <PictureList :dataList="dataList" :loading="loading" :showOp="true" :onReload="fetchData" />
+    <PictureList :dataList="dataList" :loading="loading" />
     <!-- 分页 -->
     <a-pagination
       style="text-align: right"
@@ -36,14 +48,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
 import { message } from 'ant-design-vue'
 import {
   listPictureVoByPageUsingPost,
 } from '@/api/pictureController.ts'
 import { formatSize } from '@/util'
-import { SPACE_TYPE_MAP } from '@/constants/space'
+import { SPACE_TYPE_MAP, SPACE_PERMISSION_ENUM } from '@/constants/space'
 import PictureList from '@/components/PictureList.vue'
 import PictureSearchForm from '@/components/PictureSearchForm.vue'
 
@@ -52,7 +65,16 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
 const space = ref<API.SpaceVO>({})
+
+// 权限判断
+const canUpload = computed(() => {
+  return (space.value.permissionList ?? []).includes(SPACE_PERMISSION_ENUM.PICTURE_UPLOAD)
+})
+const canManageUser = computed(() => {
+  return (space.value.permissionList ?? []).includes(SPACE_PERMISSION_ENUM.SPACE_USER_MANAGE)
+})
 
 // -------- 获取空间详情 --------
 const fetchSpaceDetail = async () => {
@@ -63,16 +85,15 @@ const fetchSpaceDetail = async () => {
     if (res.data.code === 0 && res.data.data) {
       space.value = res.data.data
     } else {
-      message.error('获取空间详情失败，' + res.data.message)
+      // 空间不存在（可能是已删除残留链接）—— 提示并跳走，避免卡死
+      message.error('获取空间详情失败，' + (res.data.message ?? '空间不存在'))
+      router.replace('/')
     }
   } catch (e: any) {
     message.error('获取空间详情失败：' + e.message)
+    router.replace('/')
   }
 }
-
-onMounted(() => {
-  fetchSpaceDetail()
-})
 
 // --------- 获取图片列表 --------
 
@@ -107,10 +128,21 @@ const fetchData = async () => {
   loading.value = false
 }
 
-// 页面加载时获取数据，请求一次
+// 页面加载时获取数据
 onMounted(() => {
+  fetchSpaceDetail()
   fetchData()
 })
+
+// 监听路由参数变化，切换空间时重新加载
+watch(
+  () => props.id,
+  () => {
+    searchParams.value.current = 1
+    fetchSpaceDetail()
+    fetchData()
+  },
+)
 
 // 分页参数
 const onPageChange = (page: number, pageSize: number) => {
@@ -121,14 +153,11 @@ const onPageChange = (page: number, pageSize: number) => {
 
 // 搜索
 const onSearch = (newSearchParams: API.PictureQueryRequest) => {
-  console.log('new', newSearchParams)
-
   searchParams.value = {
     ...searchParams.value,
     ...newSearchParams,
     current: 1,
   }
-  console.log('searchparams', searchParams.value)
   fetchData()
 }
 

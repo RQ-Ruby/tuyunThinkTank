@@ -93,9 +93,17 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         synchronized (lock) {
             // 使用事务模板执行数据库操作（确保原子性）
             Long newSpaceId = transactionTemplate.execute(status -> {
-                // 检查用户是否已有空间（避免重复创建）,一个用户只能创建一个私有空间和团队空间
-                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).eq(Space::getSpaceType, space.getSpaceType()).exists();
-                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "每个用户仅能有一个私有空间和一个团队空间");
+                // 检查用户是否已有同类型空间（私有 / 团队 互不影响，每种类型最多一个）
+                boolean exists = this.lambdaQuery()
+                        .eq(Space::getUserId, userId)
+                        .eq(Space::getSpaceType, space.getSpaceType())
+                        .exists();
+                if (exists) {
+                    SpaceTypeEnum typeEnum = SpaceTypeEnum.getEnumByValue(space.getSpaceType());
+                    String typeText = typeEnum == null ? "该类型" : typeEnum.getText();
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR,
+                            "每个用户仅能创建一个" + typeText + "，您已存在一个" + typeText + "，无法重复创建");
+                }
 
                 // 保存空间数据到数据库
                 boolean result = this.save(space);
@@ -237,11 +245,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
         // 添加排序条件（支持升序/降序）
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),
-                sortOrder.equals("ascend"),  // 判断排序方向
+                "ascend".equals(sortOrder),  // 判断排序方向
                 sortField);  // 排序字段
-
-        // 排序
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
         return queryWrapper;
     }
 

@@ -251,20 +251,10 @@ public class PictureController {
             pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
             pictureQueryRequest.setNullSpaceId(true);
         } else {
+            // 私有/团队空间，通过 Sa-Token 校验权限
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
             ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR);
-            // 私有空间
-//            User loginUser = userService.getLoginUser(request);
-//            Space space = spaceService.getById(spaceId);
-//            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-//            if (!loginUser.getId().equals(space.getUserId())) {
-//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
-//
-//            }
         }
-
-        // 普通用户默认只能查看已过审的数据
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
 
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),

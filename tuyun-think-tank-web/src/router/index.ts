@@ -82,6 +82,12 @@ const router = createRouter({
       component: AddSpaceView,
     },
     {
+      path: '/space/edit/:id',
+      name: '编辑空间',
+      component: AddSpaceView,
+      props: true,
+    },
+    {
       path: '/my_space',
       name: '我的空间',
       component: MySpaceView,
