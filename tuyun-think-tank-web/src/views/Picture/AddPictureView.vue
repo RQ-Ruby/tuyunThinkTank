@@ -6,7 +6,8 @@
         ref="imageCropperRef"
         :imageUrl="picture?.url"
         :picture="picture"
-        :spaceId="picture.id"
+        :spaceId="spaceId"
+        :space="space"
         :onSuccess="onCropSuccess"
       />
     </div>
@@ -76,6 +77,7 @@ import { computed, h, onMounted, reactive, ref } from 'vue'
 // 正确导入语句应为：
 import { useRoute, useRouter } from 'vue-router'
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
 import { message } from 'ant-design-vue'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 import CorpPicture from '@/components/CorpPicture.vue'
@@ -89,7 +91,7 @@ const route = useRoute()
 const router = useRouter()
 // 空间 id
 const spaceId = computed(() => {
-  return route.query?.spaceId
+  return route.query?.spaceId || picture.value?.spaceId
 })
 
 /*
@@ -101,6 +103,11 @@ const pictureForm = reactive<API.PictureEditRequest>({})
  * 接收父组件传递的图片
  */
 const picture = ref<API.PictureVO>()
+
+/*
+ * 空间信息
+ */
+const space = ref<API.SpaceVO>()
 /*
  * 上传成功后返回的图片，以及回显图片名称
  */
@@ -227,12 +234,27 @@ const getOldPicture = async () => {
       pictureForm.introduction = data.introduction
       pictureForm.category = data.category
       pictureForm.tags = data.tags
+      await fetchSpace()
+    }
+  }
+}
+
+// 获取空间信息
+const fetchSpace = async () => {
+  // 获取数据
+  if (spaceId.value) {
+    const res = await getSpaceVoByIdUsingGet({
+      id: spaceId.value as any,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      space.value = res.data.data
     }
   }
 }
 
 onMounted(() => {
   getOldPicture()
+  fetchSpace()
 })
 
 </script>
