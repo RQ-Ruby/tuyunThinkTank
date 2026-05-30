@@ -51,7 +51,7 @@ public class PictureFavoriteController {
         
         log.info("收藏图片请求，pictureId: {}, userId: {}", pictureId, loginUser.getId());
         
-        Picture picture = pictureService.getById(pictureId);
+        Picture picture = pictureService.getPictureByIdWithCache(pictureId);
         if (picture == null) {
             log.warn("图片不存在，pictureId: {}", pictureId);
             ThrowUtils.throwIf(true, ErrorCode.NOT_FOUND_ERROR, "图片不存在");

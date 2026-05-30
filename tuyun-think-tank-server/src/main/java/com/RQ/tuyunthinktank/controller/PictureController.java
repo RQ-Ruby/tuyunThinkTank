@@ -163,6 +163,7 @@ public class PictureController {
         // 6. 执行更新操作
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
+        pictureService.invalidatePictureDetailCache(picture.getId());
 
         log.info("图片更新成功 ID:{} 操作者:{}", picture.getId(), loginUser.getId());
         return ResultUtils.success(true);
@@ -177,8 +178,8 @@ public class PictureController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Picture> getPictureById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR, "请求参数非法");
-        // 查询数据库
-        Picture picture = pictureService.getById(id);
+        // 查询缓存 / 数据库
+        Picture picture = pictureService.getPictureByIdWithCache(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
         // 获取封装类
         return ResultUtils.success(picture);
@@ -192,8 +193,8 @@ public class PictureController {
     @GetMapping("/get/vo")
     public BaseResponse<PictureVO> getPictureVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
-        // 查询数据库
-        Picture picture = pictureService.getById(id);
+        // 查询缓存 / 数据库
+        Picture picture = pictureService.getPictureByIdWithCache(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         // 空间的图片，需要校验权限
         Space space = null;
@@ -305,6 +306,7 @@ public class PictureController {
         // 6. 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片更新失败");
+        pictureService.invalidatePictureDetailCache(picture.getId());
 
         log.info("图片编辑成功 ID:{} 操作者:{}", picture.getId(), loginUser.getId());
         return ResultUtils.success(true);
@@ -340,6 +342,7 @@ public class PictureController {
                 ErrorCode.PARAMS_ERROR, "请求参数非法");
         User loginUser = userService.getLoginUser(request);
         pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        pictureService.invalidatePictureDetailCache(pictureReviewRequest.getId());
 
         return ResultUtils.success(true);
     }

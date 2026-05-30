@@ -103,6 +103,16 @@ public interface PictureService extends IService<Picture> {
     void deletePicture(Long pictureId, User loginUser);
 
     /**
+     * @description 根据 ID 查询图片，带穿透和击穿保护
+     */
+    Picture getPictureByIdWithCache(Long pictureId);
+
+    /**
+     * @description 清理图片详情缓存
+     */
+    void invalidatePictureDetailCache(Long pictureId);
+
+    /**
      * @description 创建图片扩图任务
      * @author RQ
      * @date 2025/9/22 下午4:44

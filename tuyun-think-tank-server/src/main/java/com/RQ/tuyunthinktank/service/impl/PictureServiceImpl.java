@@ -36,6 +36,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -81,6 +82,17 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private TransactionTemplate transactionTemplate;
     @Resource
     private AliYunAiApi aliYunAiApi;
+
+    private static final String PICTURE_DETAIL_CACHE_KEY_PREFIX = "tuyun:picture:detail:";
+    private static final String PICTURE_DETAIL_LOCK_KEY_PREFIX = "tuyun:picture:detail:lock:";
+    private static final String PICTURE_ID_BLOOM_FILTER_KEY = "tuyun:picture:id:bloom";
+    private static final String PICTURE_ID_BLOOM_FILTER_INIT_KEY = "tuyun:picture:id:bloom:init";
+    private static final double PICTURE_ID_BLOOM_FILTER_ERROR_RATE = 0.001D;
+    private static final long PICTURE_ID_BLOOM_FILTER_CAPACITY = 1_000_000L;
+    private static final String CACHE_NULL_VALUE = "NULL";
+    private static final long PICTURE_DETAIL_CACHE_TTL_SECONDS = 3600L;
+    private static final long PICTURE_DETAIL_NULL_TTL_SECONDS = 300L;
+    private static final long PICTURE_DETAIL_LOCK_TTL_SECONDS = 3L;
 
 
     /**
@@ -176,6 +188,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                     .eq(Picture::getId, id)
                     .exists();
             ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            invalidatePictureDetailCache(id);
         }
         //4.按照用户id划分目录
         String originalFilename;
@@ -216,6 +229,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         transactionTemplate.execute(status -> {
             boolean result = this.saveOrUpdate(picture);
             ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片上传失败");
+            addPictureIdToBloomFilter(picture.getId());
             if (finalSpaceId != null) {
                 boolean update = spaceService.lambdaUpdate()
                         .eq(Space::getId, finalSpaceId)
@@ -646,6 +660,116 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 3. 异步清理文件（在事务提交后执行）
         // 说明：分离文件操作与数据库事务，避免分布式文件系统延迟影响事务性能
         fileManage.clearPictureFile(oldPicture);
+        invalidatePictureDetailCache(pictureId);
+    }
+
+    /**
+     * @description 根据 ID 查询图片，带穿透和击穿保护
+     */
+    @Override
+    public Picture getPictureByIdWithCache(Long pictureId) {
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR, "图片 ID 非法");
+        initPictureIdBloomFilterIfNecessary();
+        if (!mightContainPictureId(pictureId)) {
+            return null;
+        }
+
+        String cacheKey = buildPictureDetailCacheKey(pictureId);
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        String cachedValue = valueOps.get(cacheKey);
+        if (cachedValue != null) {
+            return CACHE_NULL_VALUE.equals(cachedValue) ? null : JSONUtil.toBean(cachedValue, Picture.class);
+        }
+
+        String lockKey = PICTURE_DETAIL_LOCK_KEY_PREFIX + pictureId;
+        Boolean locked = valueOps.setIfAbsent(lockKey, "1", PICTURE_DETAIL_LOCK_TTL_SECONDS, TimeUnit.SECONDS);
+        if (Boolean.TRUE.equals(locked)) {
+            try {
+                cachedValue = valueOps.get(cacheKey);
+                if (cachedValue != null) {
+                    return CACHE_NULL_VALUE.equals(cachedValue) ? null : JSONUtil.toBean(cachedValue, Picture.class);
+                }
+                Picture picture = this.getById(pictureId);
+                if (picture == null) {
+                    valueOps.set(cacheKey, CACHE_NULL_VALUE, PICTURE_DETAIL_NULL_TTL_SECONDS, TimeUnit.SECONDS);
+                    return null;
+                }
+                long cacheExpireTime = PICTURE_DETAIL_CACHE_TTL_SECONDS + RandomUtil.randomLong(0, 300);
+                valueOps.set(cacheKey, JSONUtil.toJsonStr(picture), cacheExpireTime, TimeUnit.SECONDS);
+                return picture;
+            } finally {
+                stringRedisTemplate.delete(lockKey);
+            }
+        }
+
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "查询图片失败");
+        }
+        cachedValue = valueOps.get(cacheKey);
+        if (cachedValue != null) {
+            return CACHE_NULL_VALUE.equals(cachedValue) ? null : JSONUtil.toBean(cachedValue, Picture.class);
+        }
+        return this.getById(pictureId);
+    }
+
+    private String buildPictureDetailCacheKey(Long pictureId) {
+        return PICTURE_DETAIL_CACHE_KEY_PREFIX + pictureId;
+    }
+
+    private void initPictureIdBloomFilterIfNecessary() {
+        Boolean initialized = stringRedisTemplate.hasKey(PICTURE_ID_BLOOM_FILTER_INIT_KEY);
+        if (Boolean.TRUE.equals(initialized)) {
+            return;
+        }
+        try {
+            stringRedisTemplate.execute((RedisCallback<Object>) connection -> {
+                connection.execute("BF.RESERVE", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(),
+                        String.valueOf(PICTURE_ID_BLOOM_FILTER_ERROR_RATE).getBytes(),
+                        String.valueOf(PICTURE_ID_BLOOM_FILTER_CAPACITY).getBytes());
+                return null;
+            });
+        } catch (Exception e) {
+            log.warn("RedisBloom 过滤器可能已存在或模块不可用，继续降级处理: {}", e.getMessage());
+        }
+
+        List<Picture> pictureList = this.lambdaQuery().select(Picture::getId).list();
+        for (Picture picture : pictureList) {
+            addPictureIdToBloomFilter(picture.getId());
+        }
+        stringRedisTemplate.opsForValue().set(PICTURE_ID_BLOOM_FILTER_INIT_KEY, "1");
+    }
+
+    private boolean mightContainPictureId(Long pictureId) {
+        try {
+            Object result = stringRedisTemplate.execute((RedisCallback<Object>) connection ->
+                    connection.execute("BF.EXISTS", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(), String.valueOf(pictureId).getBytes()));
+            return Long.valueOf(1L).equals(result) || Boolean.TRUE.equals(result);
+        } catch (Exception e) {
+            log.warn("RedisBloom BF.EXISTS 执行失败，降级为允许查询数据库: {}", e.getMessage());
+            return true;
+        }
+    }
+
+    private void addPictureIdToBloomFilter(Long pictureId) {
+        if (pictureId == null || pictureId <= 0) {
+            return;
+        }
+        try {
+            stringRedisTemplate.execute((RedisCallback<Object>) connection ->
+                    connection.execute("BF.ADD", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(), String.valueOf(pictureId).getBytes()));
+        } catch (Exception e) {
+            log.warn("RedisBloom BF.ADD 执行失败，跳过图片 ID 写入: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void invalidatePictureDetailCache(Long pictureId) {
+        if (pictureId != null && pictureId > 0) {
+            stringRedisTemplate.delete(buildPictureDetailCacheKey(pictureId));
+        }
     }
 
     /**
@@ -658,7 +782,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 1. 获取图片 ID 并查询图片数据
         Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
         ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR, "图片 ID 不能为空");
-        Picture picture = this.getById(pictureId);
+        Picture picture = this.getPictureByIdWithCache(pictureId);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在，ID: " + pictureId);
         //已经改为使用注解鉴权
         // 2. 权限校验
