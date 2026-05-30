@@ -87,8 +87,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private static final String PICTURE_DETAIL_LOCK_KEY_PREFIX = "tuyun:picture:detail:lock:";
     private static final String PICTURE_ID_BLOOM_FILTER_KEY = "tuyun:picture:id:bloom";
     private static final String PICTURE_ID_BLOOM_FILTER_INIT_KEY = "tuyun:picture:id:bloom:init";
+    private static final String PICTURE_ID_BLOOM_FILTER_INIT_LOCK_KEY = "tuyun:picture:id:bloom:init:lock";
     private static final double PICTURE_ID_BLOOM_FILTER_ERROR_RATE = 0.001D;
     private static final long PICTURE_ID_BLOOM_FILTER_CAPACITY = 1_000_000L;
+    private static final long PICTURE_ID_BLOOM_FILTER_INIT_LOCK_TTL_SECONDS = 60L;
     private static final String CACHE_NULL_VALUE = "NULL";
     private static final long PICTURE_DETAIL_CACHE_TTL_SECONDS = 3600L;
     private static final long PICTURE_DETAIL_NULL_TTL_SECONDS = 300L;
@@ -669,8 +671,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Override
     public Picture getPictureByIdWithCache(Long pictureId) {
         ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR, "图片 ID 非法");
-        initPictureIdBloomFilterIfNecessary();
-        if (!mightContainPictureId(pictureId)) {
+        // Bloom 未初始化完成时不能信任判断结果，否则可能把真实存在的图片误判为不存在
+        boolean bloomReady = initPictureIdBloomFilterIfNecessary();
+        if (bloomReady && !mightContainPictureId(pictureId)) {
             return null;
         }
 
@@ -681,6 +684,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             return CACHE_NULL_VALUE.equals(cachedValue) ? null : JSONUtil.toBean(cachedValue, Picture.class);
         }
 
+        // 缓存未命中时只允许一个请求回源数据库并重建缓存，避免热点 key 击穿数据库
         String lockKey = PICTURE_DETAIL_LOCK_KEY_PREFIX + pictureId;
         Boolean locked = valueOps.setIfAbsent(lockKey, "1", PICTURE_DETAIL_LOCK_TTL_SECONDS, TimeUnit.SECONDS);
         if (Boolean.TRUE.equals(locked)) {
@@ -719,34 +723,52 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         return PICTURE_DETAIL_CACHE_KEY_PREFIX + pictureId;
     }
 
-    private void initPictureIdBloomFilterIfNecessary() {
+    /**
+     * 初始化 RedisBloom 图片 ID 过滤器，并用初始化锁避免多实例重复全量加载
+     */
+    private boolean initPictureIdBloomFilterIfNecessary() {
         Boolean initialized = stringRedisTemplate.hasKey(PICTURE_ID_BLOOM_FILTER_INIT_KEY);
         if (Boolean.TRUE.equals(initialized)) {
-            return;
+            return true;
+        }
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        Boolean locked = valueOps.setIfAbsent(PICTURE_ID_BLOOM_FILTER_INIT_LOCK_KEY, "1",
+                PICTURE_ID_BLOOM_FILTER_INIT_LOCK_TTL_SECONDS, TimeUnit.SECONDS);
+        if (!Boolean.TRUE.equals(locked)) {
+            return false;
         }
         try {
-            stringRedisTemplate.execute((RedisCallback<Object>) connection -> {
-                connection.execute("BF.RESERVE", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(),
-                        String.valueOf(PICTURE_ID_BLOOM_FILTER_ERROR_RATE).getBytes(),
-                        String.valueOf(PICTURE_ID_BLOOM_FILTER_CAPACITY).getBytes());
-                return null;
-            });
-        } catch (Exception e) {
-            log.warn("RedisBloom 过滤器可能已存在或模块不可用，继续降级处理: {}", e.getMessage());
-        }
+            initialized = stringRedisTemplate.hasKey(PICTURE_ID_BLOOM_FILTER_INIT_KEY);
+            if (Boolean.TRUE.equals(initialized)) {
+                return true;
+            }
+            try {
+                stringRedisTemplate.execute((RedisCallback<Object>) connection -> {
+                    connection.execute("BF.RESERVE", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(),
+                            String.valueOf(PICTURE_ID_BLOOM_FILTER_ERROR_RATE).getBytes(),
+                            String.valueOf(PICTURE_ID_BLOOM_FILTER_CAPACITY).getBytes());
+                    return null;
+                });
+            } catch (Exception e) {
+                log.warn("RedisBloom 过滤器可能已存在或模块不可用，继续降级处理: {}", e.getMessage());
+            }
 
-        List<Picture> pictureList = this.lambdaQuery().select(Picture::getId).list();
-        for (Picture picture : pictureList) {
-            addPictureIdToBloomFilter(picture.getId());
+            List<Picture> pictureList = this.lambdaQuery().select(Picture::getId).list();
+            for (Picture picture : pictureList) {
+                addPictureIdToBloomFilter(picture.getId());
+            }
+            stringRedisTemplate.opsForValue().set(PICTURE_ID_BLOOM_FILTER_INIT_KEY, "1");
+            return true;
+        } finally {
+            stringRedisTemplate.delete(PICTURE_ID_BLOOM_FILTER_INIT_LOCK_KEY);
         }
-        stringRedisTemplate.opsForValue().set(PICTURE_ID_BLOOM_FILTER_INIT_KEY, "1");
     }
 
     private boolean mightContainPictureId(Long pictureId) {
         try {
             Object result = stringRedisTemplate.execute((RedisCallback<Object>) connection ->
                     connection.execute("BF.EXISTS", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(), String.valueOf(pictureId).getBytes()));
-            return Long.valueOf(1L).equals(result) || Boolean.TRUE.equals(result);
+            return isRedisTrue(result);
         } catch (Exception e) {
             log.warn("RedisBloom BF.EXISTS 执行失败，降级为允许查询数据库: {}", e.getMessage());
             return true;
@@ -763,6 +785,25 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         } catch (Exception e) {
             log.warn("RedisBloom BF.ADD 执行失败，跳过图片 ID 写入: {}", e.getMessage());
         }
+    }
+
+    /**
+     * 兼容不同 Redis 客户端对 BF.EXISTS 返回值的反序列化结果
+     */
+    private boolean isRedisTrue(Object result) {
+        if (result == null) {
+            return false;
+        }
+        if (result instanceof Boolean) {
+            return Boolean.TRUE.equals(result);
+        }
+        if (result instanceof Number) {
+            return ((Number) result).longValue() == 1L;
+        }
+        if (result instanceof byte[]) {
+            return "1".equals(new String((byte[]) result));
+        }
+        return "1".equals(String.valueOf(result)) || "true".equalsIgnoreCase(String.valueOf(result));
     }
 
     @Override
