@@ -97,11 +97,6 @@ const fixedMenuItems = [
     label: '首页',
   },
   {
-    key: '/gallery',
-    icon: PictureOutlined,
-    label: '公共图库',
-  },
-  {
     key: '/my_space',
     label: '我的空间',
     icon: UserOutlined,

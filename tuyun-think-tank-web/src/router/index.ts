@@ -53,6 +53,16 @@ const router = createRouter({
     name: '个人中心',
     component: UserProfileView,
   },
+  {
+    path: '/favorites',
+    name: '我的收藏',
+    component: () => import('../views/user/MyFavoritesView.vue'),
+  },
+  {
+    path: '/my_uploads',
+    name: '我的上传',
+    component: () => import('../views/user/MyUploadsView.vue'),
+  },
 
 
   {

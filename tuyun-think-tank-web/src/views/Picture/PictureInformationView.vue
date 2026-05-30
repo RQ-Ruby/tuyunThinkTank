@@ -57,6 +57,14 @@
               <template #icon><DownloadOutlined class="btn-icon" /></template>
               下载
             </a-button>
+            <a-button
+              :class="['action-btn', 'favorite-btn', { 'is-favorite': isFavorite }]"
+              :title="isFavorite ? '取消收藏' : '收藏图片'"
+              @click="toggleFavorite"
+            >
+              <template #icon><HeartOutlined v-if="!isFavorite" class="btn-icon" /><HeartFilled v-else class="btn-icon" /></template>
+              {{ isFavorite ? '' : '' }}
+            </a-button>
             <a-button v-if="canEdit" @click="doEdit" class="action-btn">
               <template #icon><EditOutlined class="btn-icon" /></template>
               编辑
@@ -95,11 +103,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { deletePictureUsingPost, doPictureReviewUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController'
+import { addFavoriteUsingPost, removeFavoriteUsingPost, checkFavoriteUsingGet } from '@/api/pictureFavoriteController'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import router from '@/router'
 import { downloadImage, formatSize } from '@/util'
 import { PIC_REVIEW_STATUS_ENUM } from '@/constants/picyure'
+import { HeartOutlined, HeartFilled } from '@ant-design/icons-vue'
 /*图片下载  */
 const doDownload = () => {
   downloadImage(picture.value.url)
@@ -172,11 +182,64 @@ const props = defineProps<{
 }>()
 const picture = ref<API.PictureVO>({})
 
+// 收藏功能
+const isFavorite = ref(false)
+
+// 检查是否已收藏
+const checkFavorite = async () => {
+  if (!loginUserStore.loginUser.id) {
+    isFavorite.value = false
+    return
+  }
+  try {
+    const res = await checkFavoriteUsingGet(props.id)
+    if (res.data.code === 0) {
+      isFavorite.value = res.data.data || false
+    }
+  } catch (error) {
+    console.error('检查收藏状态失败', error)
+  }
+}
+
+// 切换收藏状态
+const toggleFavorite = async () => {
+  if (!loginUserStore.loginUser.id) {
+    message.warning('请先登录')
+    return
+  }
+
+  const pictureId = props.id
+
+  try {
+    if (isFavorite.value) {
+      // 取消收藏
+      const res = await removeFavoriteUsingPost(pictureId)
+      if (res.data.code === 0) {
+        message.success('已取消收藏')
+        isFavorite.value = false
+      } else {
+        message.error(res.data.message || '取消收藏失败')
+      }
+    } else {
+      // 添加收藏
+      const res = await addFavoriteUsingPost(pictureId)
+      if (res.data.code === 0) {
+        message.success('收藏成功')
+        isFavorite.value = true
+      } else {
+        message.error(res.data.message || '收藏失败')
+      }
+    }
+  } catch (error) {
+    message.error('操作失败')
+  }
+}
+
 // 获取图片详情
 const fetchPictureDetail = async () => {
   try {
     const res = await getPictureVoByIdUsingGet({
-      id: props.id,
+      id: props.id as any,
     })
     if (res.data.code === 0 && res.data.data) {
       picture.value = res.data.data
@@ -190,6 +253,7 @@ const fetchPictureDetail = async () => {
 
 onMounted(() => {
   fetchPictureDetail()
+  checkFavorite()
 })
 
 </script>
@@ -284,6 +348,33 @@ onMounted(() => {
   transform: translateY(0) scale(0.95);
 }
 
+.favorite-btn {
+  color: #ff4d4f;
+  border-color: #d9d9d9;
+  background: #fff;
+}
+
+.favorite-btn:hover {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.06);
+}
+
+.favorite-btn.is-favorite {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.favorite-btn.is-favorite:hover {
+  color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.16);
+}
+
+.favorite-btn :deep(.anticon) {
+  display: inline-flex;
+}
+
 .btn-icon {
   font-size: 20px;
   margin-right: 0;
@@ -293,12 +384,6 @@ a-tag {
   margin: 4px;
 }
 
-
-/* 在现有action-btn样式中新增*/
-.action-btn.ant-btn-primary[ghost] {
-  background: rgba(24, 144, 255, 0.1);
-  border-color: #1890ff;
-}
 
 .action-btn.ant-btn-danger {
   background: rgba(255, 77, 79, 0.1);
