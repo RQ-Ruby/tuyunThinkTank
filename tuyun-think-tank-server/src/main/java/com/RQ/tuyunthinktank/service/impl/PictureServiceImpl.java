@@ -10,6 +10,7 @@ import com.RQ.tuyunthinktank.api.aliyunai.AliYunAiApi;
 import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskRequest;
 import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.common.LocalCacheManager;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
@@ -83,18 +84,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private AliYunAiApi aliYunAiApi;
 
+    @Resource
+    private TuyunProperties tuyunProperties;
+
     private static final String PICTURE_DETAIL_CACHE_KEY_PREFIX = "tuyun:picture:detail:";
     private static final String PICTURE_DETAIL_LOCK_KEY_PREFIX = "tuyun:picture:detail:lock:";
     private static final String PICTURE_ID_BLOOM_FILTER_KEY = "tuyun:picture:id:bloom";
     private static final String PICTURE_ID_BLOOM_FILTER_INIT_KEY = "tuyun:picture:id:bloom:init";
     private static final String PICTURE_ID_BLOOM_FILTER_INIT_LOCK_KEY = "tuyun:picture:id:bloom:init:lock";
-    private static final double PICTURE_ID_BLOOM_FILTER_ERROR_RATE = 0.001D;
-    private static final long PICTURE_ID_BLOOM_FILTER_CAPACITY = 1_000_000L;
-    private static final long PICTURE_ID_BLOOM_FILTER_INIT_LOCK_TTL_SECONDS = 60L;
     private static final String CACHE_NULL_VALUE = "NULL";
-    private static final long PICTURE_DETAIL_CACHE_TTL_SECONDS = 3600L;
-    private static final long PICTURE_DETAIL_NULL_TTL_SECONDS = 300L;
-    private static final long PICTURE_DETAIL_LOCK_TTL_SECONDS = 3L;
 
 
     /**
@@ -481,8 +479,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         ThrowUtils.throwIf(StrUtil.isBlank(searchText), ErrorCode.PARAMS_ERROR, "搜索词不能为空");
         ThrowUtils.throwIf(count == null || count <= 0, ErrorCode.PARAMS_ERROR, "抓取数量不能为空");
-        //抓取数量不能超过30
-        ThrowUtils.throwIf(count > 30, ErrorCode.PARAMS_ERROR, "抓取数量不能超过30");
+        //抓取数量不能超过配置限制
+        ThrowUtils.throwIf(count > tuyunProperties.getBatch().getMaxFetchCount(), ErrorCode.PARAMS_ERROR, "抓取数量超过配置限制");
         //构建url
         String fetchUrl = "https://cn.bing.com/images/async?q=" + searchText + "&mmasync=1";
         //进行链接
@@ -557,7 +555,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > tuyunProperties.getBatch().getMaxPageSize(), ErrorCode.PARAMS_ERROR);
         // 普通用户默认只能查看已过审的数据
         pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
 
@@ -596,7 +594,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         localCacheManager.put(cacheKey, cacheValue);
         // 存入 Redis 缓存
         // 5 - 10 分钟随机过期，防止雪崩
-        int cacheExpireTime = 300 + RandomUtil.randomInt(0, 300);
+        int pageTtlMinSeconds = tuyunProperties.getCache().getPageTtlMinSeconds();
+        int pageTtlMaxSeconds = Math.max(pageTtlMinSeconds + 1, tuyunProperties.getCache().getPageTtlMaxSeconds());
+        int cacheExpireTime = pageTtlMinSeconds + RandomUtil.randomInt(0, pageTtlMaxSeconds - pageTtlMinSeconds);
         valueOps.set(cacheKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
 
         // 返回结果
@@ -686,7 +686,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 缓存未命中时只允许一个请求回源数据库并重建缓存，避免热点 key 击穿数据库
         String lockKey = PICTURE_DETAIL_LOCK_KEY_PREFIX + pictureId;
-        Boolean locked = valueOps.setIfAbsent(lockKey, "1", PICTURE_DETAIL_LOCK_TTL_SECONDS, TimeUnit.SECONDS);
+        Boolean locked = valueOps.setIfAbsent(lockKey, "1", tuyunProperties.getCache().getDetailLockTtlSeconds(), TimeUnit.SECONDS);
         if (Boolean.TRUE.equals(locked)) {
             try {
                 cachedValue = valueOps.get(cacheKey);
@@ -695,10 +695,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 }
                 Picture picture = this.getById(pictureId);
                 if (picture == null) {
-                    valueOps.set(cacheKey, CACHE_NULL_VALUE, PICTURE_DETAIL_NULL_TTL_SECONDS, TimeUnit.SECONDS);
+                    valueOps.set(cacheKey, CACHE_NULL_VALUE, tuyunProperties.getCache().getDetailNullTtlSeconds(), TimeUnit.SECONDS);
                     return null;
                 }
-                long cacheExpireTime = PICTURE_DETAIL_CACHE_TTL_SECONDS + RandomUtil.randomLong(0, 300);
+                long cacheExpireTime = tuyunProperties.getCache().getDetailTtlSeconds() + RandomUtil.randomLong(0, tuyunProperties.getCache().getDetailTtlJitterSeconds());
                 valueOps.set(cacheKey, JSONUtil.toJsonStr(picture), cacheExpireTime, TimeUnit.SECONDS);
                 return picture;
             } finally {
@@ -733,7 +733,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
         Boolean locked = valueOps.setIfAbsent(PICTURE_ID_BLOOM_FILTER_INIT_LOCK_KEY, "1",
-                PICTURE_ID_BLOOM_FILTER_INIT_LOCK_TTL_SECONDS, TimeUnit.SECONDS);
+                tuyunProperties.getCache().getBloomInitLockTtlSeconds(), TimeUnit.SECONDS);
         if (!Boolean.TRUE.equals(locked)) {
             return false;
         }
@@ -745,8 +745,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             try {
                 stringRedisTemplate.execute((RedisCallback<Object>) connection -> {
                     connection.execute("BF.RESERVE", PICTURE_ID_BLOOM_FILTER_KEY.getBytes(),
-                            String.valueOf(PICTURE_ID_BLOOM_FILTER_ERROR_RATE).getBytes(),
-                            String.valueOf(PICTURE_ID_BLOOM_FILTER_CAPACITY).getBytes());
+                            String.valueOf(tuyunProperties.getCache().getBloomErrorRate()).getBytes(),
+                            String.valueOf(tuyunProperties.getCache().getBloomCapacity()).getBytes());
                     return null;
                 });
             } catch (Exception e) {

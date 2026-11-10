@@ -11,6 +11,7 @@ import com.RQ.tuyunthinktank.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.common.BaseResponse;
 import com.RQ.tuyunthinktank.common.DeleteRequest;
 import com.RQ.tuyunthinktank.common.ResultUtils;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
@@ -69,6 +70,9 @@ public class PictureController {
     private AliYunAiApi aliYunAiApi;
     @Resource
     private SpaceUserAuthManager spaceUserAuthManager;
+
+    @Resource
+    private TuyunProperties tuyunProperties;
 
 
 
@@ -243,7 +247,7 @@ public class PictureController {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
         ThrowUtils.throwIf(current <= 0 || size <= 0, ErrorCode.PARAMS_ERROR, "分页参数错误");
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR, "单页数量不能超过20");
+        ThrowUtils.throwIf(size > tuyunProperties.getBatch().getMaxPageSize(), ErrorCode.PARAMS_ERROR, "单页数量超过配置限制");
         // 空间权限校验
         Long spaceId = pictureQueryRequest.getSpaceId();
 // 公开图库

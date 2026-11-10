@@ -50,6 +50,41 @@ public class CosClientConfig {
      */
     private String bucket;
 
+    /**
+     * 分片上传线程池大小
+     */
+    private int transferThreadPoolSize = 5;
+
+    /**
+     * 分片上传阈值，单位字节
+     */
+    private long multipartUploadThreshold = 5L * 1024 * 1024;
+
+    /**
+     * 分片大小，单位字节
+     */
+    private long minimumUploadPartSize = 1L * 1024 * 1024;
+
+    /**
+     * 生成缩略图的最小文件大小，单位字节
+     */
+    private long thumbnailThreshold = 30L * 1024;
+
+    /**
+     * 缩略图宽度
+     */
+    private int thumbnailWidth = 400;
+
+    /**
+     * 缩略图高度
+     */
+    private int thumbnailHeight = 400;
+
+    /**
+     * 处理后的图片格式
+     */
+    private String outputFormat = "webp";
+
     @Bean
     /*腾讯云 Java SDK 源:https://cloud.tencent.com/document/product/436/65935*/
     public COSClient cosClient() {
@@ -68,14 +103,14 @@ public class CosClientConfig {
     @Bean(destroyMethod = "shutdownNow")
     public TransferManager transferManager(COSClient cosClient) {
         // 创建线程池用于分片上传的并发控制
-        ExecutorService threadPool = Executors.newFixedThreadPool(5);
+        ExecutorService threadPool = Executors.newFixedThreadPool(transferThreadPoolSize);
         TransferManager transferManager = new TransferManager(cosClient, threadPool);
         // 设置高级接口的配置项
         TransferManagerConfiguration transferManagerConfiguration = new TransferManagerConfiguration();
         // 分块上传阈值设置为 5MB（超过此大小自动使用分块上传）
-        transferManagerConfiguration.setMultipartUploadThreshold(5 * 1024 * 1024);
+        transferManagerConfiguration.setMultipartUploadThreshold(multipartUploadThreshold);
         // 分块大小设置为 1MB
-        transferManagerConfiguration.setMinimumUploadPartSize(1 * 1024 * 1024);
+        transferManagerConfiguration.setMinimumUploadPartSize(minimumUploadPartSize);
         transferManager.setConfiguration(transferManagerConfiguration);
         return transferManager;
     }

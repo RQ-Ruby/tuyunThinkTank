@@ -3,14 +3,14 @@ package com.RQ.tuyunthinktank.manage.upload;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author RQ
@@ -19,10 +19,8 @@ import java.util.List;
  */
 @Service
 public class UrlPictureUpload extends PictureUploadTemplate {
-    // 常量定义（提高可维护性）
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 10MB限制
-    private static final List<String> ALLOWED_EXTENSIONS =
-            Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
+    @Resource
+    private TuyunProperties tuyunProperties;
 
     @Override
     protected void validPicture(Object inputSource) {
@@ -51,5 +49,7 @@ public class UrlPictureUpload extends PictureUploadTemplate {
         String fileUrl = (String) inputSource;
         // 下载文件到临时目录
         HttpUtil.downloadFile(fileUrl, file);
+        ThrowUtils.throwIf(file.length() > tuyunProperties.getUpload().getUrlMaxSize(),
+                ErrorCode.PARAMS_ERROR, "远程图片大小超过限制");
     }
 }

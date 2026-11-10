@@ -19,11 +19,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Resource
     private WsHandshakeInterceptor wsHandshakeInterceptor;
 
+    @Resource
+    private TuyunProperties tuyunProperties;
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // websocket
-        registry.addHandler(pictureEditHandler, "/ws/picture/edit")
+        registry.addHandler(pictureEditHandler, tuyunProperties.getWebsocket().getPath())
                 .addInterceptors(wsHandshakeInterceptor)
-                .setAllowedOrigins("*");
+                .setAllowedOrigins(tuyunProperties.getWebsocket().getAllowedOrigins().toArray(new String[0]));
     }
 }

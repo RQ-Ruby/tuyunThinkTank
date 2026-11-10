@@ -1,6 +1,7 @@
 package com.RQ.tuyunthinktank.common;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +11,10 @@ import java.util.concurrent.TimeUnit;
 public class LocalCacheManager {
     private final Cache<String, String> localCache;
 
-    public LocalCacheManager() {
+    public LocalCacheManager(TuyunProperties tuyunProperties) {
         this.localCache = Caffeine.newBuilder()
-                .maximumSize(1000)
-                .expireAfterWrite(5L, TimeUnit.MINUTES)
+                .maximumSize(tuyunProperties.getCache().getLocalMaxSize())
+                .expireAfterWrite(tuyunProperties.getCache().getLocalTtlMinutes(), TimeUnit.MINUTES)
                 .build();
     }
 

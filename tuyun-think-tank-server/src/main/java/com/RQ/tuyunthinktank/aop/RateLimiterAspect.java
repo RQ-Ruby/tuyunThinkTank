@@ -1,6 +1,7 @@
 package com.RQ.tuyunthinktank.aop;
 
 import com.RQ.tuyunthinktank.annotation.RateLimiter;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -26,11 +27,14 @@ public class RateLimiterAspect {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private TuyunProperties tuyunProperties;
+
     @Around("@annotation(rateLimiter)")
     public Object doInterceptor(ProceedingJoinPoint joinPoint, RateLimiter rateLimiter) throws Throwable {
         String key = rateLimiter.key();
-        int time = rateLimiter.time();
-        int count = rateLimiter.count();
+        int time = tuyunProperties.getRateLimit().getWindowSeconds();
+        int count = tuyunProperties.getRateLimit().getCount();
 
         // 获取当前请求
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();

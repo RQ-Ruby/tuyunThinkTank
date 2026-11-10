@@ -2,6 +2,7 @@ package com.RQ.tuyunthinktank.service.impl;
 
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.manage.auth.StpKit;
@@ -38,6 +39,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
     @Resource
     private SpaceMapper spaceMapper;
+
+    @Resource
+    private TuyunProperties tuyunProperties;
 
     /**
      * @param userAccount   用户账号
@@ -101,7 +105,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public String getEncryptPassword(String userPassword) {
         // 盐值，混淆密码
-        final String SALT = "RuQian";
+        final String SALT = tuyunProperties.getSecurity().getPasswordSalt();
         // 加密方式
         //DigestUtils.md5DigestAsHex 方法用于计算给定字符串的 MD5 哈希值，并将其作为十六进制字符串返回。
         //在这个例子中，(SALT + userPassword) 表示将盐值和用户密码拼接在一起，然后计算它们的 MD5 哈希值。

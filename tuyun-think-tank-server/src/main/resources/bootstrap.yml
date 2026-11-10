@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: tuyun-think-tank
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    nacos:
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:TUYUN_THINK_TANK}
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+        refresh-enabled: true

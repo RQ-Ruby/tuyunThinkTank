@@ -89,7 +89,7 @@ public abstract class PictureUploadTemplate {
             processFile(inputSource, tempFile);
 
             CIUploadResult ciUploadResult;
-            if (tempFile.length() > SaveManage.MULTIPART_THRESHOLD) {
+            if (tempFile.length() > cosClientConfig.getMultipartUploadThreshold()) {
                 cosManager.putObjectByTransferManager(uploadPath, tempFile);
                 ciUploadResult = cosManager.processUploadedPicture(uploadPath, tempFile);
             } else {

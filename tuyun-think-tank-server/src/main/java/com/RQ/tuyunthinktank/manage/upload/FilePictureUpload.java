@@ -1,14 +1,14 @@
 package com.RQ.tuyunthinktank.manage.upload;
 
 import cn.hutool.core.io.FileUtil;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author RQ
@@ -17,10 +17,8 @@ import java.util.List;
  */
 @Service
 public class FilePictureUpload extends PictureUploadTemplate {
-    // 常量定义（提高可维护性）
-    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024L; // 100MB限制
-    private static final List<String> ALLOWED_EXTENSIONS =
-            Arrays.asList("jpeg", "jpg", "png", "webp"); // 允许的图片格式
+    @Resource
+    private TuyunProperties tuyunProperties;
 
     @Override
     protected void validPicture(Object inputSource) {
@@ -32,13 +30,13 @@ public class FilePictureUpload extends PictureUploadTemplate {
 
         // 2. 文件大小校验
         long fileSize = multipartFile.getSize();
-        ThrowUtils.throwIf(fileSize > MAX_FILE_SIZE,
+        ThrowUtils.throwIf(fileSize > tuyunProperties.getUpload().getFileMaxSize(),
                 ErrorCode.PARAMS_ERROR, "文件大小不能超过20MB");
 
         // 3. 文件格式校验
         String originalFilename = multipartFile.getOriginalFilename();
         String fileExtension = FileUtil.getSuffix(originalFilename).toLowerCase();
-        ThrowUtils.throwIf(!ALLOWED_EXTENSIONS.contains(fileExtension),
+        ThrowUtils.throwIf(!tuyunProperties.getUpload().getAllowedExtensions().contains(fileExtension),
                 ErrorCode.PARAMS_ERROR, "仅支持JPG/PNG/WEBP格式");
     }
 

@@ -4,6 +4,7 @@ import com.RQ.tuyunthinktank.annotation.AuthCheck;
 import com.RQ.tuyunthinktank.common.BaseResponse;
 import com.RQ.tuyunthinktank.common.DeleteRequest;
 import com.RQ.tuyunthinktank.common.ResultUtils;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.constant.UserConstant;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
@@ -47,6 +48,9 @@ public class SpaceController {
     private SpaceUserService spaceUserService;
     @Resource
     private SpaceUserAuthManager spaceUserAuthManager;
+
+    @Resource
+    private TuyunProperties tuyunProperties;
 
 
 
@@ -225,7 +229,7 @@ public class SpaceController {
         long current = spaceQueryRequest.getCurrent();
         long size = spaceQueryRequest.getPageSize();
         ThrowUtils.throwIf(current <= 0 || size <= 0, ErrorCode.PARAMS_ERROR, "分页参数错误");
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR, "单页数量不能超过20");
+        ThrowUtils.throwIf(size > tuyunProperties.getBatch().getMaxPageSize(), ErrorCode.PARAMS_ERROR, "单页数量超过配置限制");
 
         // 查询数据库
         Page<Space> spacePage = spaceService.page(new Page<>(current, size),

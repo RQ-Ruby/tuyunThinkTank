@@ -9,11 +9,13 @@ import cn.hutool.json.JSONUtil;
 import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskRequest;
 import com.RQ.tuyunthinktank.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.RQ.tuyunthinktank.api.aliyunai.model.GetOutPaintingTaskResponse;
+import com.RQ.tuyunthinktank.config.TuyunProperties;
 import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * @author RQ
@@ -24,15 +26,8 @@ import org.springframework.stereotype.Component;
 @Component  // 声明为Spring组件，由Spring容器管理
 public class AliYunAiApi {
 
-    // 从配置文件中读取阿里云AI服务的API密钥
-    @Value("${aliYunAi.apiKey}")
-    private String apiKey;
-
-    // 定义创建图像扩展任务的API端点URL
-    public static final String CREATE_OUT_PAINTING_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/out-painting";
-
-    // 定义查询任务状态的API端点URL，%s为任务ID占位符
-    public static final String GET_OUT_PAINTING_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/tasks/%s";
+    @Resource
+    private TuyunProperties tuyunProperties;
 
     /**
      * 创建图像扩展任务
@@ -46,8 +41,8 @@ public class AliYunAiApi {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "扩图参数为空");
         }
         // 构建HTTP POST请求
-        HttpRequest httpRequest = HttpRequest.post(CREATE_OUT_PAINTING_TASK_URL)
-                .header(Header.AUTHORIZATION, "Bearer " + apiKey)  // 添加认证头
+        HttpRequest httpRequest = HttpRequest.post(tuyunProperties.getAi().getOutPainting().getCreateTaskUrl())
+                .header(Header.AUTHORIZATION, "Bearer " + tuyunProperties.getAi().getOutPainting().getApiKey())  // 添加认证头
                 // 异步模式（X-DashScope-Async）必须设置为 enable以启用异步处理
                 .header("X-DashScope-Async", "enable")
                 .header(Header.CONTENT_TYPE, ContentType.JSON.getValue())  // 设置内容类型为JSON
@@ -84,8 +79,8 @@ public class AliYunAiApi {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "任务 id 不能为空");
         }
         // 构建HTTP GET请求查询任务状态，将任务ID填充到URL中
-        try (HttpResponse httpResponse = HttpRequest.get(String.format(GET_OUT_PAINTING_TASK_URL, taskId))
-                .header(Header.AUTHORIZATION, "Bearer " + apiKey)  // 添加认证头
+        try (HttpResponse httpResponse = HttpRequest.get(String.format(tuyunProperties.getAi().getOutPainting().getGetTaskUrl(), taskId))
+                .header(Header.AUTHORIZATION, "Bearer " + tuyunProperties.getAi().getOutPainting().getApiKey())  // 添加认证头
                 .execute()) {
             // 检查HTTP响应状态是否成功
             if (!httpResponse.isOk()) {

@@ -41,11 +41,6 @@ public class SaveManage {
     @Resource
     private TransferManager transferManager;
 
-    /**
-     * 分片上传阈值：5MB
-     * 超过此大小的文件将自动使用分片上传
-     */
-    public static final long MULTIPART_THRESHOLD = 5 * 1024 * 1024L;
 
     /**
      * @param key  存储在腾讯云cos的key
@@ -102,10 +97,10 @@ public class SaveManage {
         List<PicOperations.Rule> picOperationList = new ArrayList<>();
         // 添加图片处理规则,将图片转换成webp格式
         //生成新的文件名
-        String newKey = FileUtil.mainName(key) + ".webp";
+        String newKey = FileUtil.mainName(key) + "." + cosClientConfig.getOutputFormat();
         // 1.添加图片处理规则,将图片转换成webp格式
         PicOperations.Rule rule = new PicOperations.Rule();
-        rule.setRule("imageMogr2/format/webp");
+        rule.setRule("imageMogr2/format/" + cosClientConfig.getOutputFormat());
         //存储桶
         rule.setBucket(cosClientConfig.getBucket());
         // 设置新的文件名
@@ -117,17 +112,20 @@ public class SaveManage {
         /*源:https://cloud.tencent.com/document/product/436/55377*/
         //仅对大于20KB的图片进行处理
         // 2. 生成缩略图
-        // 缩略图处理，仅对 > 30 KB 的图片生成缩略图
-        if (file.length() > 30 * 1024) {
+        // 缩略图处理，仅对超过配置阈值的图片生成缩略图
+        if (file.length() > cosClientConfig.getThumbnailThreshold()) {
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
             thumbnailRule.setBucket(cosClientConfig.getBucket());
             // 关键优化点1：强制使用WebP格式（减少30%体积，更清晰）
-            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail.webp";
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + cosClientConfig.getOutputFormat();
             thumbnailRule.setFileId(thumbnailKey);
 
             // 关键优化点2：添加锐化+抗锯齿参数 | 优化缩放策略
             String r = String.format(
-                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/webp/sharp/100", 400, 400
+                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/%s/sharp/100",
+                    cosClientConfig.getThumbnailWidth(),
+                    cosClientConfig.getThumbnailHeight(),
+                    cosClientConfig.getOutputFormat()
             );
             thumbnailRule.setRule(r);
             picOperationList.add(thumbnailRule);
@@ -184,21 +182,24 @@ public class SaveManage {
         List<PicOperations.Rule> picOperationList = new ArrayList<>();
 
         // 1. WebP 转码规则
-        String newKey = FileUtil.mainName(key) + ".webp";
+        String newKey = FileUtil.mainName(key) + "." + cosClientConfig.getOutputFormat();
         PicOperations.Rule rule = new PicOperations.Rule();
-        rule.setRule("imageMogr2/format/webp");
+        rule.setRule("imageMogr2/format/" + cosClientConfig.getOutputFormat());
         rule.setBucket(cosClientConfig.getBucket());
         rule.setFileId(newKey);
         picOperationList.add(rule);
 
-        // 2. 缩略图规则（仅对 > 30KB 的图片生成缩略图）
-        if (file.length() > 30 * 1024) {
+        // 2. 缩略图规则（仅对超过配置阈值的图片生成缩略图）
+        if (file.length() > cosClientConfig.getThumbnailThreshold()) {
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
             thumbnailRule.setBucket(cosClientConfig.getBucket());
-            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail.webp";
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + cosClientConfig.getOutputFormat();
             thumbnailRule.setFileId(thumbnailKey);
             String r = String.format(
-                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/webp/sharp/100", 400, 400
+                    "imageMogr2/thumbnail/%sx%s>/strip/1/format/%s/sharp/100",
+                    cosClientConfig.getThumbnailWidth(),
+                    cosClientConfig.getThumbnailHeight(),
+                    cosClientConfig.getOutputFormat()
             );
             thumbnailRule.setRule(r);
             picOperationList.add(thumbnailRule);

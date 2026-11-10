@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.Resource;
+
 /**
  * @author RQ
  * @description 全局跨域配置
@@ -11,6 +13,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
+
+    @Resource
+    private TuyunProperties tuyunProperties;
     /**
      * @return: void
      * @author RQ
@@ -21,9 +26,9 @@ public class CorsConfig implements WebMvcConfigurer {
         // 全局跨域配置，覆盖所有请求
         registry.addMapping("/**")
                 // 允许发送 Cookie 和认证信息
-                .allowCredentials(true)
+                .allowCredentials(tuyunProperties.getCors().isAllowCredentials())
                 // 使用 allowedOriginPatterns 以支持通配符域名与 allowCredentials 共存
-                .allowedOriginPatterns("*")
+                .allowedOriginPatterns(tuyunProperties.getCors().getAllowedOriginPatterns().toArray(new String[0]))
                 // 支持常见的 HTTP 方法
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 // 允许所有请求头

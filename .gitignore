@@ -1,0 +1,20 @@
+# Private project context and credentials
+.agents/skills/
+docs/
+**/secrets/
+**/.local/
+**/bootstrap-local.yml
+**/bootstrap-prod.yml
+**/application-local.yml
+**/application-prod.yml
+**/nacos/*.yaml
+**/nacos/*.yml
+**/.env
+**/.env.*
+!**/.env.example
+
+# IDE and machine-local files
+.idea/
+*.iml
+*.log
+logs/
