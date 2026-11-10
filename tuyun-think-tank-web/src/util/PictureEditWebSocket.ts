@@ -13,7 +13,17 @@ export default class PictureEditWebSocket {
    * 初始化 WebSocket 连接
    */
   connect() {
-    const url = `ws://localhost:8123/api/ws/picture/edit?pictureId=${this.pictureId}`
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const apiOrigin = import.meta.env.VITE_API_ORIGIN
+    let wsOrigin = `${protocol}//${window.location.host}`
+
+    if (apiOrigin) {
+      const apiUrl = new URL(apiOrigin)
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+      wsOrigin = `${wsProtocol}//${apiUrl.host}`
+    }
+
+    const url = `${wsOrigin}/api/ws/picture/edit?pictureId=${this.pictureId}`
     this.socket = new WebSocket(url)
 
     this.socket.binaryType = 'blob'
