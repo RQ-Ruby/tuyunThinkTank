@@ -28,13 +28,13 @@ const router = createRouter({
       path: '/add_picture',
       name: '新建图片',
       component: AddPictureView,
-      meta: { requiresAuth: true } // 新增元信息标识
+      meta: { requiresAuth: true },
     },
     {
       path: '/add_picture/batch',
       name: '批量创建图片',
       component: AddPictureBatchView,
-      meta: { requiresAuth: true } // 新增元信息标识
+      meta: { requiresAuth: true },
     },
   {
     path: '/user/login',
@@ -52,16 +52,19 @@ const router = createRouter({
     path: '/user/profile',
     name: '个人中心',
     component: UserProfileView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/favorites',
     name: '我的收藏',
     component: () => import('../views/user/MyFavoritesView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/my_uploads',
     name: '我的上传',
     component: () => import('../views/user/MyUploadsView.vue'),
+    meta: { requiresAuth: true },
   },
 
 
@@ -69,16 +72,19 @@ const router = createRouter({
     path: '/admin/userManage',
     name: '用户管理',
     component: UserManageView,
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/admin/pictureManage',
     name: '图片管理',
     component: PictureManageView,
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
     {
       path: '/admin/spaceManage',
       name: '空间管理',
       component: SpaceManageView,
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/picture/:id',
@@ -90,17 +96,20 @@ const router = createRouter({
       path: '/add_space',
       name: '创建空间',
       component: AddSpaceView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/space/edit/:id',
       name: '编辑空间',
       component: AddSpaceView,
       props: true,
+      meta: { requiresAuth: true },
     },
     {
       path: '/my_space',
       name: '我的空间',
       component: MySpaceView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/space/:id',
@@ -113,15 +122,13 @@ const router = createRouter({
       name: '空间成员管理',
       component: SpaceUserManageView,
       props: true,
+      meta: { requiresAuth: true },
     },
 
     {
       path: '/about',
       name: '关于',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/HomeView.vue'),
+      component: HomeView,
     },
   ],
 })

@@ -87,10 +87,10 @@
 
 <script setup lang="ts">
 import { computed, h, onMounted, ref } from 'vue'
-import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController.ts'
+import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
 import {DeleteOutlined, DownloadOutlined, EditOutlined, ShareAltOutlined} from '@ant-design/icons-vue'
-import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
+import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from 'vue-router'
 import {downloadImage, formatSize, toHexColor} from '@/util'
 import ShareModal from "@/components/ShareModal.vue";
@@ -119,8 +119,13 @@ const canEdit = computed(() => {
 // 获取图片详情
 const fetchPictureDetail = async () => {
   try {
+    const pictureId = String(props.id)
+    if (!/^\d+$/.test(pictureId)) {
+      message.error('图片 ID 无效')
+      return
+    }
     const res = await getPictureVoByIdUsingGet({
-      id: props.id,
+      id: pictureId,
     })
     if (res.data.code === 0 && res.data.data) {
       picture.value = res.data.data
@@ -169,7 +174,7 @@ const doDownload = () => {
 }
 
 // ----- 分享操作 ----
-const shareModalRef = ref()
+const shareModalRef = ref<{ openModal: () => void }>()
 // 分享链接
 const shareLink = ref<string>()
 // 分享

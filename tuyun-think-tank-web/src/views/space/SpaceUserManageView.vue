@@ -38,7 +38,7 @@
           <a-select
             v-model:value="record.spaceRole"
             :options="SPACE_ROLE_OPTIONS"
-            @change="(value) => editSpaceRole(value, record)"
+            @change="editSpaceRole($event, record)"
           />
         </template>
         <template v-else-if="column.dataIndex === 'createTime'">
@@ -54,15 +54,15 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { SPACE_ROLE_OPTIONS } from '../../constants/space.ts'
+import { SPACE_ROLE_OPTIONS } from '@/constants/space'
 import {
   addSpaceUserUsingPost,
   deleteSpaceUserUsingPost,
   editSpaceUserUsingPost,
   listSpaceUserUsingPost,
-} from '@/api/spaceUserController.ts'
+} from '@/api/spaceUserController'
 import { searchUserByAccountUsingPost } from '@/api/userController'
 import dayjs from 'dayjs'
 
@@ -71,6 +71,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const spaceId = computed(() => {
+  const id = String(props.id)
+  return /^\d+$/.test(id) ? id : undefined
+})
 
 const columns = [
   {
@@ -97,12 +101,11 @@ const loading = ref(false)
 
 // 获取数据
 const fetchData = async () => {
-  const spaceId = props.id
-  if (!spaceId) {
+  if (!spaceId.value) {
     return
   }
   const res = await listSpaceUserUsingPost({
-    spaceId,
+    spaceId: spaceId.value,
   })
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data ?? []
@@ -117,14 +120,19 @@ onMounted(() => {
 })
 
 // 添加成员表单
-const formData = reactive<API.SpaceUserAddRequest>({
+interface AddSpaceUserForm {
+  userAccount?: string
+  spaceRole: string
+}
+
+const formData = reactive<AddSpaceUserForm>({
   userAccount: undefined,
+  spaceRole: 'editor',
 })
 
 // 创建成员
 const handleSubmit = async () => {
-  const spaceId = props.id
-  if (!spaceId) {
+  if (!spaceId.value) {
     return
   }
   if (!formData.userAccount) {
@@ -141,7 +149,7 @@ const handleSubmit = async () => {
       return
     }
     const res = await addSpaceUserUsingPost({
-      spaceId,
+      spaceId: spaceId.value,
       userId: searchRes.data.data.id,
       spaceRole: formData.spaceRole,
     })
@@ -160,7 +168,11 @@ const handleSubmit = async () => {
 }
 
 // 编辑成员角色
-const editSpaceRole = async (value, record) => {
+const editSpaceRole = async (value: string, record: API.SpaceUserVO) => {
+  if (!record.id) {
+    message.error('成员记录缺少 ID，无法修改角色')
+    return
+  }
   const res = await editSpaceUserUsingPost({
     id: record.id,
     spaceRole: value,

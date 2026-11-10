@@ -44,7 +44,6 @@
         <a-textarea
           v-model:value="pictureForm.introduction"
           placeholder="请输入简介"
-          autoSize
           :auto-size="{ minRows: 3, maxRows: 6 }"
           allowClear
         />
@@ -90,8 +89,11 @@ const uploadType = ref<string>('file')
 const route = useRoute()
 const router = useRouter()
 // 空间 id
-const spaceId = computed(() => {
-  return route.query?.spaceId || picture.value?.spaceId
+const spaceId = computed<string | undefined>(() => {
+  const querySpaceId = route.query?.spaceId
+  const rawSpaceId = Array.isArray(querySpaceId) ? querySpaceId[0] : querySpaceId
+  const value = String(rawSpaceId ?? picture.value?.spaceId ?? '')
+  return /^\d+$/.test(value) ? value : undefined
 })
 
 /*
@@ -167,7 +169,7 @@ const onImageOutSuccess = (newPicture: API.PictureVO) => {
  * values: any：接收表单数据的参数,any 表示任意类型
  */
 const handleSubmit = async (values: any) => {
-  const pictureId = picture.value.id
+  const pictureId = picture.value?.id
   if (!pictureId) {
     return
   }
@@ -187,8 +189,13 @@ const handleSubmit = async (values: any) => {
     message.error('创建失败，' + res.data.message)
   }
 }
-const categoryOptions = ref<string[]>([])
-const tagOptions = ref<string[]>([])
+interface SelectOption {
+  value: string
+  label: string
+}
+
+const categoryOptions = ref<SelectOption[]>([])
+const tagOptions = ref<SelectOption[]>([])
 
 // 获取标签和分类选项
 const getTagCategoryOptions = async () => {
@@ -224,8 +231,13 @@ const getOldPicture = async () => {
   // 获取数据
   const id = route.query?.id
   if (id) {
+    const routePictureId = String(Array.isArray(id) ? id[0] : id)
+    if (!/^\d+$/.test(routePictureId)) {
+      message.error('图片 ID 无效')
+      return
+    }
     const res = await getPictureVoByIdUsingGet({
-      id: id,
+      id: routePictureId,
     })
     if (res.data.code === 0 && res.data.data) {
       const data = res.data.data
@@ -244,7 +256,7 @@ const fetchSpace = async () => {
   // 获取数据
   if (spaceId.value) {
     const res = await getSpaceVoByIdUsingGet({
-      id: spaceId.value as any,
+      id: spaceId.value,
     })
     if (res.data.code === 0 && res.data.data) {
       space.value = res.data.data

@@ -143,11 +143,8 @@ const handleGenerate =async ()  =>{
       pictureId: props.picture.id,
       //需要设置的扩图参数
       parameters:{
-        xScale: 2,
-        yScale: 2,
-        limitImageSize: true, // 限制输出图像文件大小，避免尺寸错误
-        bestQuality: false, // 关闭最佳质量模式以提高速度
-        addWatermark: false // 不添加水印
+        n: 1,
+        watermark: false
       }
     }
 

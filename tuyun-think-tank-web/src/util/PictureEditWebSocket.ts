@@ -1,9 +1,9 @@
 export default class PictureEditWebSocket {
-  private pictureId: number
+  private pictureId: string
   private socket: WebSocket | null
   private eventHandlers: Record<string, Array<(data?: any) => void>>
 
-  constructor(pictureId: number) {
+  constructor(pictureId: string) {
     this.pictureId = pictureId
     this.socket = null
     this.eventHandlers = {}

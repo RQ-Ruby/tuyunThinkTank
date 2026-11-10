@@ -76,10 +76,10 @@
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { deleteSpaceUsingPost, listSpaceByPageUsingPost } from '@/api/spaceController.ts'
+import { deleteSpaceUsingPost, listSpaceByPageUsingPost } from '@/api/spaceController'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS, SPACE_TYPE_MAP, SPACE_TYPE_OPTIONS } from '@/constants/space.ts'
+import { SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS, SPACE_TYPE_MAP, SPACE_TYPE_OPTIONS } from '@/constants/space'
 import { formatSize } from '@/util'
 
 
@@ -143,7 +143,7 @@ const fetchData = async () => {
   })
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
-    total.value = res.data.data.total ?? 0
+    total.value = Number(res.data.data.total ?? 0)
   } else {
     message.error('获取数据失败，' + res.data.message)
   }
@@ -161,7 +161,7 @@ const pagination = computed(() => {
     pageSize: searchParams.pageSize,
     total: total.value,
     showSizeChanger: true,
-    showTotal: (total) => `共 ${total} 条`,
+    showTotal: (total: number) => `共 ${total} 条`,
   }
 })
 

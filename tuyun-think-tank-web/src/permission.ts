@@ -18,8 +18,8 @@ let firstLoginUser = true
  * 2. 校验是否登录
  * 3. 校验是否有权限访问该页面
  */
-router.beforeEach(async (to, from, next) => {
-  // 1. 获取用户状态管理实例（Pinia/Vuex）
+router.beforeEach(async (to) => {
+  // 1. 获取用户状态管理实例
   const loginUserStore = useLoginUserStore()
 
   // 2. 获取当前缓存的用户信息
@@ -31,40 +31,34 @@ router.beforeEach(async (to, from, next) => {
    * - 异步请求最新用户数据并更新本地状态
    */
   if (firstLoginUser) {
-    await loginUserStore.fetchLoginUser() // 3.1 请求后端获取用户信息
-    loginUser = loginUserStore.loginUser // 3.2 更新本地用户数据引用
-    firstLoginUser = false // 3.3 标记已加载完成
-  }
-
-  // 4. 获取目标路由完整路径
-  const targetPath = to.fullPath
-// 需要登录的路径配置
-  const authPaths = ['/add_picture', '/admin'];
-
-  // 精确匹配需要登录的路径
-  if (authPaths.some(path => to.path === path)) {
-    if (!loginUser?.id) {
-      message.warning('请先登录');
-      next(`/user/login?redirect=${to.fullPath}`);
-      return;
+    try {
+      await loginUserStore.fetchLoginUser()
+    } catch {
+      // 首次请求用户信息失败时保持未登录状态，不要阻断页面导航
     }
+    loginUser = loginUserStore.loginUser
+    firstLoginUser = false
   }
-  /*
-   * 5. 管理员路由权限校验
-   * - 匹配所有/admin开头的路径
-   * - 需同时满足：用户已登录 + 角色为admin
-   */
-  if (targetPath.startsWith('/admin')) {
-    if (!loginUser || loginUser.userRole !== 'admin') {
-      // 5.1 权限不足处理
-      message.error('没有权限')
-      // 5.2 跳转登录页并携带重定向路径
-      //redirect=${targetPath}：将当前试图访问的完整路径作为URL参数传递
-      next(`/user/login?redirect=${targetPath}`)
-      return // 5.3 终止后续守卫执行
+
+  // 4. 读取路由元信息，统一处理登录校验
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  if (requiresAuth && !loginUser.id) {
+    message.warning('请先登录')
+    return {
+      path: '/user/login',
+      query: { redirect: to.fullPath },
     }
   }
 
-  // 6. 放行路由（必须调用next()，否则导航挂起
-  next()
+  // 5. 后台路由同时校验后端返回的用户角色
+  const requiresAdmin =
+    to.matched.some((record) => record.meta.requiresAdmin) || to.path.startsWith('/admin')
+  if (requiresAdmin && loginUser.userRole !== 'admin') {
+    message.error('没有权限')
+    return loginUser.id
+      ? { path: '/' }
+      : { path: '/user/login', query: { redirect: to.fullPath } }
+  }
+
+  return true
 })

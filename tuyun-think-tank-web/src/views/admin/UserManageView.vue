@@ -148,7 +148,7 @@ const columns = [
 
 
 // 数据
-const dataList = ref([])
+const dataList = ref<API.UserVO[]>([])
 const total = ref(0)
 
 // 搜索条件
@@ -172,7 +172,7 @@ const fetchData = async () => {
   if (res.data.data) {
     // ?? 空值合并运算符提供默认值，增强健壮性
     dataList.value = res.data.data.records ?? []
-    total.value = res.data.data.total ?? 0
+    total.value = Number(res.data.data.total ?? 0)
     console.log(res.data.data.records)
   } else {
     message.error('获取数据失败，' + res.data.message)
@@ -192,7 +192,7 @@ const paging = computed(() => {
     total: total.value,
     // 是否显示快速跳转
     showSizeChanger: true,
-    showTotal: (total) => `共 ${total} 条`,
+    showTotal: (total: number) => `共 ${total} 条`,
   }
 })
 // 表格变化处理
@@ -213,7 +213,7 @@ const doSearch = () => {
 //1.编辑弹窗开关
 const open = ref(false)
 //2.编辑用户 - 完善后的逻辑
-const doEdit = async (id: number) => {
+const doEdit = async (id: string) => {
   try {
     const res = await getUserVoByIdUsingGet({ id })
     if (res.data.code === 0 && res.data.data) {
@@ -251,7 +251,7 @@ const handleCancel = () => {
 }
 
 //删除用户
-const doDelete = async (id: number) => {
+const doDelete = async (id: string) => {
  if(id==null){
    return
  }
@@ -282,12 +282,12 @@ const doDelete = async (id: number) => {
   margin-bottom: 24px;
 }
 
-.ant-form-item :deep() {
+.ant-form-item {
   margin-bottom: 0;
 }
 
 /* 表格优化 */
-.ant-table :deep(){
+.ant-table {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -297,43 +297,43 @@ const doDelete = async (id: number) => {
   background: #f8fbff;
 }
 
-.ant-table-cell :deep() {
+.ant-table-cell {
   padding: 12px 16px !important;
 }
 
 /* 角色标签 */
-:deep(.ant-tag :deep())  {
+.ant-tag {
   border: none !important;
   font-weight: 500;
 }
 
-:deep(.ant-tag[color='blue'] :deep()) {
+.ant-tag[color='blue'] {
   background: linear-gradient(145deg, #4096ff, #1677ff);
   color: white;
 }
 
-:deep(.ant-tag[color='red'] :deep()) {
+.ant-tag[color='red'] {
   background: linear-gradient(145deg, #ff4d4f, #cf1322);
   color: white;
 }
 
 /* 修复transition属性缺少时间参数的问题 */
-:deep(.ant-btn :deep()) {
+.ant-btn {
   transition: all 0.2s ease-in-out;
 }
 
-.ant-btn-primary:hover  :deep(){
+.ant-btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
 }
 
-.ant-btn-danger:hover :deep(){
+.ant-btn-danger:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 77, 79, 0.4);
 }
 
 /* 编辑弹窗优化 */
-.ant-modal-body :deep(){
+:deep(.ant-modal-body) {
   padding: 24px !important;
 }
 

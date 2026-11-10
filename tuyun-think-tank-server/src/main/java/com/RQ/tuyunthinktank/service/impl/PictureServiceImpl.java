@@ -15,6 +15,8 @@ import com.RQ.tuyunthinktank.exception.BusinessException;
 import com.RQ.tuyunthinktank.exception.ErrorCode;
 import com.RQ.tuyunthinktank.exception.ThrowUtils;
 import com.RQ.tuyunthinktank.manage.FileManage;
+import com.RQ.tuyunthinktank.manage.auth.SpaceUserAuthManager;
+import com.RQ.tuyunthinktank.manage.auth.model.SpaceUserPermissionConstant;
 import com.RQ.tuyunthinktank.manage.upload.FilePictureUpload;
 import com.RQ.tuyunthinktank.manage.upload.UrlPictureUpload;
 import com.RQ.tuyunthinktank.mapper.PictureMapper;
@@ -22,11 +24,14 @@ import com.RQ.tuyunthinktank.model.dto.file.UploadPictureResult;
 import com.RQ.tuyunthinktank.model.dto.picture.*;
 import com.RQ.tuyunthinktank.model.entity.Picture;
 import com.RQ.tuyunthinktank.model.entity.Space;
+import com.RQ.tuyunthinktank.model.entity.SpaceUser;
 import com.RQ.tuyunthinktank.model.entity.User;
 import com.RQ.tuyunthinktank.model.enums.PictureReviewStatusEnum;
+import com.RQ.tuyunthinktank.model.enums.SpaceTypeEnum;
 import com.RQ.tuyunthinktank.model.vo.PictureVO;
 import com.RQ.tuyunthinktank.service.PictureService;
 import com.RQ.tuyunthinktank.service.SpaceService;
+import com.RQ.tuyunthinktank.service.SpaceUserService;
 import com.RQ.tuyunthinktank.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -80,6 +85,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private SpaceService spaceService;
     @Resource
+    private SpaceUserService spaceUserService;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
+    @Resource
     private TransactionTemplate transactionTemplate;
     @Resource
     private AliYunAiApi aliYunAiApi;
@@ -88,6 +97,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private TuyunProperties tuyunProperties;
 
     private static final String PICTURE_DETAIL_CACHE_KEY_PREFIX = "tuyun:picture:detail:";
+    /**
+     * 判断用户是否具备空间操作权限，创建者与系统管理员始终放行。
+     */
+    private boolean hasSpacePermission(Space space, User loginUser, String permission) {
+        if (userService.isAdmin(loginUser) || loginUser.getId().equals(space.getUserId())) {
+            return true;
+        }
+        if (space.getSpaceType() == null || space.getSpaceType() != SpaceTypeEnum.TEAM.getValue()) {
+            return false;
+        }
+        SpaceUser spaceUser = spaceUserService.lambdaQuery()
+                .eq(SpaceUser::getSpaceId, space.getId())
+                .eq(SpaceUser::getUserId, loginUser.getId())
+                .one();
+        return spaceUser != null
+                && spaceUserAuthManager.getPermissionsByRole(spaceUser.getSpaceRole()).contains(permission);
+    }
     private static final String PICTURE_DETAIL_LOCK_KEY_PREFIX = "tuyun:picture:detail:lock:";
     private static final String PICTURE_ID_BLOOM_FILTER_KEY = "tuyun:picture:id:bloom";
     private static final String PICTURE_ID_BLOOM_FILTER_INIT_KEY = "tuyun:picture:id:bloom:init";
@@ -133,15 +159,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         //1.判断用户是否登录
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
 
-        // 空间权限校验
+        // 空间上传/替换权限校验
         Long spaceId = pictureUploadRequest.getSpaceId();
         if (spaceId != null) {
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-            // 必须空间创建人才能上传
-            if (!loginUser.getId().equals(space.getUserId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
-            }
+            ThrowUtils.throwIf(!hasSpacePermission(space, loginUser, SpaceUserPermissionConstant.PICTURE_UPLOAD),
+                    ErrorCode.NO_AUTH_ERROR, "没有空间上传权限");
             // 校验额度
             if (space.getTotalCount() >= space.getMaxCount()) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "空间条数不足");
@@ -151,36 +175,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
 
-
         //2.初始化id,用于判断是更新还是新增
-        Long id = null;
-        if (pictureUploadRequest.getId() != null) {
-            id = pictureUploadRequest.getId();
-        }
-        if (spaceId != null) {
-            boolean exists = spaceService.exists(new QueryWrapper<Space>().eq("id", spaceId));
-            ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-            //是否是本空间的创建人
-            ThrowUtils.throwIf(!spaceService.getById(spaceId).getUserId().equals(loginUser.getId()),
+        Long id = pictureUploadRequest.getId();
+        if (spaceId != null && id != null) {
+            Picture oldPicture = this.getById(id);
+            ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            ThrowUtils.throwIf(!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser),
                     ErrorCode.NO_AUTH_ERROR, "无权限操作");
-            //如果是更新图片，则判断图片是否存在
-            if (id != null) {
-                //判断老图片是否存在
-                Picture oldPicture = this.getById(id);
-                ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-                //判断是否是空间创建者或者是管理员
-                ThrowUtils.throwIf(!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser),
-                        ErrorCode.NO_AUTH_ERROR, "无权限操作");
-
-                //检验空间是否一致
-                if (spaceId == null) {
-                    if (oldPicture.getSpaceId() != null)
-                        spaceId = oldPicture.getSpaceId();
-                } else {
-                    if (!oldPicture.getSpaceId().equals(spaceId))
-                        throw new RuntimeException("图片空间不一致");
-                }
-            }
+            ThrowUtils.throwIf(oldPicture.getSpaceId() == null || !oldPicture.getSpaceId().equals(spaceId),
+                    ErrorCode.PARAMS_ERROR, "图片空间不一致");
         }
         //3.如果是更新，判断是否存在该图片
         if (id != null) {
@@ -430,17 +433,19 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         //3.通过id判断图片是否存在
         Picture oldpicture = this.getById(id);
         ThrowUtils.throwIf(oldpicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-        //2.判断是否重复上传
-        if (oldpicture.getReviewStatus().equals(reviewStatus)) {
-            ThrowUtils.throwIf(!oldpicture.getReviewMessage().equals(reviewMessage), ErrorCode.PARAMS_ERROR, "请勿重复审核");
+        //2.判断是否重复审核
+        if (reviewStatus.equals(oldpicture.getReviewStatus())
+                && Objects.equals(oldpicture.getReviewMessage(), reviewMessage)) {
+            return;
         }
-        //4.更新数据
-        Picture updatpicture = new Picture();
-        BeanUtils.copyProperties(pictureReviewRequest, updatpicture);
-        updatpicture.setUserId(loginUser.getId());
-        updatpicture.setUpdateTime(date());
-        boolean b = this.updateById(updatpicture);
-        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR, "审核失败");
+        //4.更新审核信息，不能覆盖图片作者 userId
+        Picture updatePicture = new Picture();
+        BeanUtils.copyProperties(pictureReviewRequest, updatePicture);
+        updatePicture.setReviewerId(loginUser.getId());
+        updatePicture.setReviewTime(new Date());
+        updatePicture.setUpdateTime(date());
+        boolean updated = this.updateById(updatePicture);
+        ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "审核失败");
 
     }
 
@@ -830,12 +835,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 //        checkSpaceAuth(picture, loginUser);
         // 3. 构造 AI 扩图请求参数
         CreateOutPaintingTaskRequest outPaintingRequest = new CreateOutPaintingTaskRequest();
-        // 设置输入源：图片 URL
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
-        input.setImageUrl(picture.getUrl());
+        input.setFunction("expand");
+        input.setPrompt("请自然扩展图片边界，保持主体、构图和原有风格一致");
+        input.setBaseImageUrl(picture.getUrl());
         outPaintingRequest.setInput(input);
-        // 复用原始请求中的其他配置参数
-        BeanUtil.copyProperties(createPictureOutPaintingTaskRequest, outPaintingRequest);
+        if (createPictureOutPaintingTaskRequest.getParameters() != null) {
+            outPaintingRequest.setParameters(createPictureOutPaintingTaskRequest.getParameters());
+        }
         // 4. 调用 AI 服务创建扩图任务
         return aliYunAiApi.createOutPaintingTask(outPaintingRequest);
     }

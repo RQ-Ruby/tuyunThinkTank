@@ -24,21 +24,23 @@ import { uploadPictureUsingPost } from '@/api/pictureController'
 
 // 定义上传参数的类型
 interface UploadParams {
-  id?: number
-  spaceId?: number
+  id?: string
+  spaceId?: string
 }
 
 // 上传成功后返回的图片
 interface Props {
   picture?: API.PictureVO
   /** 空间 id */
-  spaceId?: number
+  spaceId?: string
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 // 接收父组件传递的图片
 const props = defineProps<Props>()
 
-const beforeUpload = (file: UploadProps['fileList'][number]) => {
+type BeforeUploadFile = Parameters<NonNullable<UploadProps['beforeUpload']>>[0]
+
+const beforeUpload = (file: BeforeUploadFile) => {
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
   if (!isJpgOrPng) {
     message.error('不支持上传该格式的图片，推荐 jpg 或 png')

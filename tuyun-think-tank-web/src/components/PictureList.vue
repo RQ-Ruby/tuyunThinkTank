@@ -1,555 +1,183 @@
 <template>
-  <div id="homePage">
-    <!--   图片列表 -->
-    <a-list
-      :grid="{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 4 }"
-      :data-source="dataList"
-      :loading="loading"
-    >
-      <template #renderItem="{ item: picture }">
-        <a-list-item style="padding: 0">
-          <a-list-item style="padding: 0">
-            <!-- 单张图片 -->
-            <a-card hoverable @click="doPicture(picture)" class="picture-card">
-              <template #cover>
-                <div class="image-container">
-                  <img
-                    style="height: 300px; object-fit: cover"
-                    :alt="picture.name"
-                    :src="picture.thumbnailUrl ?? picture.url"
-                  />
+  <a-list
+    :grid="{ gutter: 18, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 4 }"
+    :data-source="dataList"
+    :loading="loading"
+  >
+    <template #renderItem="{ item: picture }">
+      <a-list-item class="picture-list-item">
+        <a-card hoverable class="picture-card" @click="doPicture(picture)">
+          <template #cover>
+            <div class="image-container">
+              <img
+                :src="picture.thumbnailUrl ?? picture.url"
+                :alt="picture.name"
+                loading="lazy"
+              />
+              <span class="category-pill">{{ picture.category ?? '精选' }}</span>
+            </div>
+          </template>
 
-                  <div class="image-overlay">
-                    <div class="meta-content">
-                      <h4 class="title">{{ picture.name }}</h4>
-                      <a-flex vertical :gap="4">
-                        <a-tag color="green" class="category-tag">
-                          {{ picture.category ?? '默认' }}
-                        </a-tag>
-                        <a-flex wrap :gap="4">
-                          <a-tag v-for="tag in picture.tags" :key="tag" class="tag-item">
-                            {{ tag }}
-                          </a-tag>
-                        </a-flex>
-                      </a-flex>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </a-card>
-          </a-list-item>
-        </a-list-item>
-      </template>
-    </a-list>
-  </div>
-
+          <div class="picture-copy">
+            <div class="picture-meta-row">
+              <span class="author-name">{{ picture.user?.userName ?? '图云创作者' }}</span>
+              <span class="picture-format">{{ picture.picFormat?.toUpperCase() ?? 'IMAGE' }}</span>
+            </div>
+            <h3 class="picture-title" :title="picture.name">{{ picture.name }}</h3>
+            <p class="picture-introduction" :title="picture.introduction ?? ''">
+              {{ picture.introduction ?? '一张值得被收藏与分享的视觉灵感。' }}
+            </p>
+            <div class="picture-tags">
+              <a-tag v-for="tag in (picture.tags ?? []).slice(0, 3)" :key="tag" class="tag-item">
+                {{ tag }}
+              </a-tag>
+            </div>
+          </div>
+        </a-card>
+      </a-list-item>
+    </template>
+  </a-list>
 </template>
 
 <script setup lang="ts">
-
 import { useRouter } from 'vue-router'
 
-// 定义组件接收的props
 interface Props {
   dataList: API.PictureVO[]
   loading: boolean
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-//点击图片跳转图片详情页
 const router = useRouter()
+
 const doPicture = (picture: API.PictureVO) => {
-  router.push({
-    path: `/picture/${picture.id}`, // 这里是反引号
-  })
+  router.push(`/picture/${picture.id}`)
 }
-
-
-
 </script>
 
 <style scoped>
-#homePage {
-}
-
-#homePage .search-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  height: 56px; /* 从48px调整 */
-  width: 450px;
-  padding: 8px 16px; /* 新增内边距 */
-}
-
-#homePage .ant-input-search-button {
-  height: 48px !important; /* 匹配新高度 */
-  padding: 0 24px !important;
-}
-
-#homePage .ant-input-affix-wrapper {
-  height: 48px !important;
-  font-size: 16px !important; /* 增大字号 */
-}
-
-@media (max-width: 576px) {
-  #homePage .search-bar {
-    height: 48px;
-    padding: 6px 12px;
-  }
-  #homePage .ant-input-search-button {
-    height: 40px !important;
-  }
-}
-
-#homePage .tag-bar {
-  margin-bottom: 20px;
+.picture-list-item {
+  padding: 0 !important;
 }
 
 .picture-card {
   overflow: hidden;
-  position: relative;
-}
-
-.image-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 16/9;
-}
-
-.picture-card img {
   height: 100%;
-  width: 100%;
-  object-fit: cover;
-  min-width: 100%;
-  min-height: 100%;
+  border: 1px solid rgba(69, 102, 155, 0.1);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(44, 73, 119, 0.08);
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.picture-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 38px rgba(44, 73, 119, 0.15);
 }
 
 .image-container {
+  position: relative;
   overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #edf2f8;
 }
-.image-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+
+.image-container img {
+  display: block;
   width: 100%;
-  height: 40%;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.picture-card:hover .image-container img {
+  transform: scale(1.04);
+}
+
+.category-pill {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 10px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 999px;
+  background: rgba(17, 30, 52, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.picture-copy {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  padding: 16px 17px 15px;
+}
+
+.picture-meta-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: #94a0b2;
+  font-size: 11px;
 }
 
-.picture-card:hover .image-overlay {
-  opacity: 1;
-}
-
-.meta-content {
-  width: 100%;
-  color: white;
-}
-
-.title {
-  font-size: 14px;
-  margin-bottom: 8px;
-  white-space: nowrap;
+.author-name {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.category-tag {
-  padding: 0 4px;
-  width: max-content;
   white-space: nowrap;
+}
+
+.picture-format {
+  flex: none;
+  letter-spacing: 0.8px;
+}
+
+.picture-title {
   overflow: hidden;
-  text-overflow: ellipsis;
-  background: linear-gradient(45deg, #13c2c2, #06b48b) !important;
-  border: none;
-  color: white !important;
-  transition: all 0.3s cubic-bezier(0.34, 0.69, 0.1, 1);
-}
-
-.picture-card {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: all 0.3s cubic-bezier(0.34, 0.69, 0.1, 1);
-}
-
-.picture-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-}
-
-.image-overlay {
-  align-items: center;
-  padding: 16px;
-}
-
-.image-container {
-  aspect-ratio: 4/3;
-}
-
-.picture-card {
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  transition: all 0.3s cubic-bezier(0.34, 0.69, 0.1, 1.2);
-}
-
-.picture-card:hover {
-  transform: scale(1.05) rotate(1deg);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-}
-
-.title {
+  margin: 0 0 7px;
+  color: #24334b;
   font-size: 16px;
-  margin-bottom: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.category-tag {
-  padding: 2px 8px;
-  border-radius: 8px;
-  background: linear-gradient(45deg, #1890ff, #0050b3) !important;
+.picture-introduction {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 38px;
+  margin: 0;
+  color: #7d899c;
+  font-size: 12px;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.picture-card {
-  transition: all 0.25s ease-out;
-  transform-origin: center;
-}
-
-.picture-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+.picture-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .tag-item {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #333;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-/* 轮播图容器 */
-.carousel-container {
-  margin-bottom: 40px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  margin-inline-end: 0;
+  color: #50617a;
+  font-size: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f6fb;
 }
 
-/* 轮播项 */
-:deep(.slick-slide) {
-  height: 480px;
-  background: linear-gradient(45deg, #2c3e50, #3498db);
-  position: relative;
-}
-
-.content-wrapper {
-  position: absolute;
-  left: 15%;
-  top: 50%;
-  transform: translateY(-50%);
-  text-align: left;
-  max-width: 600px;
-}
-
-
-.sub-text {
-  font-size: 1.4em;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.6;
-}
-
-/* 箭头优化 */
-:deep(.slick-arrow.custom-slick-arrow) {
-  width: 48px;
-  height: 48px;
-  font-size: 32px;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.slick-arrow.custom-slick-arrow:hover) {
-  color: #fff;
-  background: rgba(0, 0, 0, 0.4);
-  transform: scale(1.15) translateY(-2px);
-}
-
-/* 响应式适配 */
 @media (max-width: 768px) {
-  .content-wrapper {
-    left: 10%;
-    right: 10%;
-  }
-
-  .gradient-text {
-    font-size: 2.2em;
-  }
-
-  :deep(.slick-arrow.custom-slick-arrow) {
-    width: 36px;
-    height: 36px;
-    font-size: 24px;
+  .picture-copy {
+    min-height: 142px;
   }
 }
-
-/* 轮播图片样式 */
-.carousel-image {
-  width: 100%;
-  height: 480px;
-  object-fit: cover;
-  display: block;
-}
-
-/* 保持原有轮播容器样式 */
-.carousel-container {
-  margin-bottom: 40px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-
-.sub-text {
-  font-size: 1.8em;
-  font-family: 'ZCOOL KuaiLe', 'YouYuan', cursive;
-  color: rgba(255, 255, 255, 0.98);
-  text-shadow:
-    2px 2px 8px rgba(0, 0, 0, 0.8),
-    0 0 15px rgba(255, 255, 255, 0.5);
-  line-height: 1.6;
-  padding: 12px 24px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  backdrop-filter: blur(8px);
-  transform: translateZ(0);
-}
-
-
-
-.sub-text {
-  font-size: 1.4em;
-  padding: 8px 16px;
-  border-width: 0.5px;
-}
-
-/* 修改渐变文字样式 */
-.gradient-text {
-  font-size: 4em;
-  font-family: 'Alibaba PuHuiTi', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  background: linear-gradient(45deg, #ffffff 25%, #e6f7ff 75%);
-  -webkit-background-clip: text;
-  text-shadow:
-    3px 3px 8px rgba(0, 0, 0, 0.4),
-    -1px -1px 2px rgba(255, 255, 255, 0.3),
-    0 0 20px rgba(255, 255, 255, 0.4);
-  letter-spacing: 2px;
-  line-height: 1.2;
-  position: relative;
-  animation: textFloat 3s ease-in-out infinite;
-}
-
-/* 新增浮动动画 */
-@keyframes textFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* 修改副标题样式 */
-.sub-text {
-  font-size: 1.8em;
-  font-family: 'YouYuan', 'KaiTi', cursive;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow:
-    2px 2px 6px rgba(0, 0, 0, 0.7),
-    0 0 12px rgba(255, 255, 255, 0.4);
-  line-height: 1.6;
-  padding: 12px 28px;
-  background: linear-gradient(45deg,
-  rgba(0, 0, 0, 0.25) 0%,
-  rgba(0, 0, 0, 0.15) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .gradient-text {
-    font-size: 2.5em;
-    text-shadow:
-      2px 2px 5px rgba(0, 0, 0, 0.4),
-      -1px -1px 1px rgba(255, 255, 255, 0.3);
-  }
-
-  .sub-text {
-    font-size: 1.3em;
-    padding: 8px 16px;
-    border-width: 0.8px;
-  }
-}
-.search-container {
-  display: flex;
-  flex-direction: row-reverse; /* 反转顺序使按钮在右 */
-  align-items: center;
-  gap: 20px;
-  margin: 0 auto 24px;
-  max-width: 1200px;
-  padding: 0 24px;
-}
-
-.action-buttons {
-  flex: none;
-  display: flex;
-  gap: 45px;
-}
-
-.search-bar {
-  flex: 1;
-  max-width: 640px;
-}
-
-/* 响应式调整 */
-@media (max-width: 992px) {
-  .search-container {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0 16px;
-  }
-
-  .action-buttons {
-    justify-content: center;
-    flex-wrap: wrap;
-    order: 2; /* 移动端按钮在下 */
-    margin-top: 16px;
-  }
-
-  .search-bar {
-    order: 1; /* 移动端搜索框在上 */
-    max-width: 100%;
-  }
-}
-
-/* 搜索框区域自动填充 */
-#homePage .search-bar {
-  flex: 1;
-  max-width: 640px;
-}
-
-/* 响应式调整 */
-@media (max-width: 992px) {
-  .search-container {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0 16px;
-  }
-
-
-
-  #homePage .search-bar {
-    max-width: 100%;
-  }
-}
-
-
-
-
-
-
-
-
-
-/* 调整搜索框高度和样式 */
-#homePage .search-bar {
-  flex-grow: 1;
-  max-width: 540px;
-}
-
-#homePage .ant-input-search {
-  width: 100%;
-  height: 56px; /* 从48px调整到56px */
-}
-
-#homePage .ant-input-search-button {
-  height: 56px !important; /* 匹配新高度 */
-  padding: 0 24px !important;
-  font-size: 16px !important; /* 增大字号 */
-}
-
-#homePage .ant-input-affix-wrapper {
-  height: 70px !important; /* 增大输入框高度 */
-  padding: 0 16px !important; /* 增加内边距 */
-  font-size: 20px !important; /* 增大字号 */
-}
-
-/* 保持功能按钮与搜索框的协调性 */
-.custom-button {
-  height: 48px; /* 从42px调整到48px */
-  padding: 0 24px;
-  font-size: 15px;
-  border-radius: 24px;
-  background: linear-gradient(45deg, #4b57ff, #4dcbfd);
-  color: white !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  #homePage .search-bar {
-    width: 100%;
-  }
-
-  #homePage .ant-input-search {
-    height: 52px;
-  }
-
-  #homePage .ant-input-affix-wrapper {
-    height: 52px !important;
-  }
-
-  #homePage .ant-input-search-button {
-    height: 52px !important;
-  }
-
-  .custom-button {
-    height: 44px;
-    padding: 0 16px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 576px) {
-  #homePage .ant-input-search {
-    height: 48px;
-  }
-
-  #homePage .ant-input-affix-wrapper {
-    height: 48px !important;
-    font-size: 14px !important;
-  }
-
-  #homePage .ant-input-search-button {
-    height: 48px !important;
-    font-size: 14px !important;
-  }
-
-  .custom-button {
-    height: 40px;
-    padding: 0 12px;
-    font-size: 13px;
-  }
-}
-
-
 </style>

@@ -64,11 +64,12 @@ import {
   StarOutlined, TeamOutlined
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
-import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
-import { useSidebarStore } from '@/stores/useSidebarStore.ts'
+import { useLoginUserStore } from '@/stores/useLoginUserStore'
+import { useSidebarStore } from '@/stores/useSidebarStore'
 import { message } from 'ant-design-vue'
 import { SPACE_TYPE_ENUM } from '@/constants/space'
 import { listMyTeamSpaceUsingPost } from '@/api/spaceUserController'
+import { userLogoutUsingPost } from '@/api/userController'
 
 const loginUserStore = useLoginUserStore()
 const sidebarStore = useSidebarStore()
@@ -187,15 +188,19 @@ const handleSettings = () => {
 }
 
 // 退出登录
-const handleLogout = () => {
-  loginUserStore.setLoginUser({
-    userName: "未登录",
-    id: undefined,
-    userAvatar: undefined,
-    userRole: undefined,
-  })
-  message.success('已退出登录')
-  router.push('/user/login')
+const handleLogout = async () => {
+  try {
+    await userLogoutUsingPost()
+  } finally {
+    loginUserStore.setLoginUser({
+      userName: '未登录',
+      id: undefined,
+      userAvatar: undefined,
+      userRole: undefined,
+    })
+    message.success('已退出登录')
+    await router.push('/user/login')
+  }
 }
 </script>
 

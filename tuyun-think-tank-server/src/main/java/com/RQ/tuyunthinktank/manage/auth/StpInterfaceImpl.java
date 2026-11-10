@@ -179,7 +179,7 @@ public class  StpInterfaceImpl implements StpInterface {
         String contentType = request.getHeader(Header.CONTENT_TYPE.getValue());
         SpaceUserAuthContext authRequest;
         // 获取请求参数
-        if (ContentType.JSON.getValue().equals(contentType)) {
+        if (contentType != null && contentType.toLowerCase().startsWith(ContentType.JSON.getValue())) {
             String body = ServletUtil.getBody(request);
             authRequest = JSONUtil.toBean(body, SpaceUserAuthContext.class);
         } else {

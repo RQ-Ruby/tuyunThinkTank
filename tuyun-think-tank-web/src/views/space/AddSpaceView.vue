@@ -1,9 +1,9 @@
 <template>
   <div id="addSpaceView">
     <div style="margin-bottom: 24px">
-      <h2>{{ isEdit ? '编辑空间' : route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队' : '创建空间' }}</h2>
+      <h2>{{ isEdit ? '编辑空间' : isTeamSpace ? '创建团队' : '创建空间' }}</h2>
       <div style="color: #666; margin-top: 8px">
-        {{ isEdit ? '修改空间基础信息' : route.query.type == SPACE_TYPE_ENUM.TEAM ? '创建团队空间，邀请成员共同协作管理图片' : '创建个人空间，管理您的私有图片资源' }}
+        {{ isEdit ? '修改空间基础信息' : isTeamSpace ? '创建团队空间，邀请成员共同协作管理图片' : '创建个人空间，管理您的私有图片资源' }}
       </div>
     </div>
 
@@ -55,8 +55,13 @@ import { SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM } from '@/constants/space'
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
-const spaceId = computed(() => route.params.id as string | undefined)
+const spaceId = computed<string | undefined>(() => {
+  const rawId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+  const id = String(rawId ?? '')
+  return /^\d+$/.test(id) ? id : undefined
+})
 const isEdit = computed(() => !!spaceId.value)
+const isTeamSpace = computed(() => Number(route.query.type) === SPACE_TYPE_ENUM.TEAM)
 
 const formData = reactive<API.SpaceAddRequest>({
   spaceName: '',

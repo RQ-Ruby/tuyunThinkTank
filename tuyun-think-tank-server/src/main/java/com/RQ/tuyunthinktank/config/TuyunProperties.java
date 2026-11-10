@@ -113,7 +113,7 @@ public class TuyunProperties {
     @Data
     public static class OutPainting {
         private String apiKey;
-        private String createTaskUrl = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/out-painting";
+        private String createTaskUrl = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis";
         private String getTaskUrl = "https://dashscope.aliyuncs.com/api/v1/tasks/%s";
     }
 }

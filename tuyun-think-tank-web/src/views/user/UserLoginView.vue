@@ -1,74 +1,77 @@
 <template>
-  <div class="auth-container">
-    <div class="sci-fi-bg">
-      <div class="geometric-pattern"></div>
-    </div>
+  <div class="auth-page">
+    <header class="auth-topbar">
+      <router-link to="/" class="brand-link">
+        <img :src="logoUrl" alt="图云智库" class="brand-logo" />
+        <span>图云智库</span>
+      </router-link>
+      <router-link to="/" class="back-home">
+        <ArrowLeftOutlined />
+        返回首页
+      </router-link>
+    </header>
 
-    <div class="content-wrapper">
-      <!-- 左侧文字区 -->
-      <div class="left-content">
-        <h1 class="slogan">企业级智能协同云图库</h1>
+    <main class="auth-shell">
+      <section class="story-panel">
+        <a-tag color="blue" class="story-tag">VISUAL INSPIRATION PLATFORM</a-tag>
+        <h1>把灵感，<br />沉淀成团队的视觉资产。</h1>
+        <p class="story-description">
+          浏览高质量精选图片，管理个人与团队空间，收藏灵感，并通过 AI 扩图与审核机制，
+          完成从发现素材到交付内容的完整链路。
+        </p>
 
-        <div class="jieshi">
-          释放 AI 驱动的创意潜能，
-          将灵感转化为精致艺术作品。
-          让创作更智能，让设计更出众。
+        <div class="feature-grid">
+          <article class="feature-card">
+            <PictureOutlined />
+            <div>
+              <strong>精选图库</strong>
+              <span>多维筛选与高质量视觉素材</span>
+            </div>
+          </article>
+          <article class="feature-card">
+            <TeamOutlined />
+            <div>
+              <strong>团队空间</strong>
+              <span>成员角色、权限与协作编辑</span>
+            </div>
+          </article>
+          <article class="feature-card">
+            <RobotOutlined />
+            <div>
+              <strong>AI 扩图</strong>
+              <span>为不同媒介快速延展画面</span>
+            </div>
+          </article>
+          <article class="feature-card">
+            <SafetyCertificateOutlined />
+            <div>
+              <strong>审核链路</strong>
+              <span>草稿、待审、通过与拒绝</span>
+            </div>
+          </article>
         </div>
-        <div class="feature-list">
-          <div class="feature-item">
-            <div class="icon-wrapper">
-              <CloudOutlined class="feature-icon" />
-            </div>
-            <div class="feature-text">
-              <h3>AI智能分类</h3>
 
-            </div>
-          </div>
-
-          <div class="feature-item">
-            <div class="icon-wrapper">
-              <TeamOutlined class="feature-icon" />
-            </div>
-            <div class="feature-text">
-              <h3>团队协作</h3>
-
-            </div>
-          </div>
-
-          <div class="feature-item">
-            <div class="icon-wrapper">
-              <LockOutlined class="feature-icon" />
-            </div>
-            <div class="feature-text">
-              <h3>军工级安全</h3>
-
-            </div>
-          </div>
-
-          <div class="feature-item">
-            <div class="icon-wrapper">
-              <RocketOutlined class="feature-icon" />
-            </div>
-            <div class="feature-text">
-              <h3>极速检索</h3>
-
-            </div>
-          </div>
+        <div class="story-footnote">
+          <CheckCircleFilled />
+          演示环境已准备 13 位用户、12 个空间与 120+ 张图片
         </div>
-      </div>
+      </section>
 
-      <!-- 右侧登录卡片 -->
-      <div class="right-content">
-        <div class="auth-card">
+      <section class="login-panel">
+        <div class="login-card">
+          <div class="login-heading">
+            <span class="login-kicker">WELCOME BACK</span>
+            <h2>登录图云智库</h2>
+            <p>继续浏览、收藏和管理你的视觉灵感。</p>
+          </div>
+
           <a-form :model="formState" name="basic" autocomplete="off" @finish="handleSubmit">
-            <h2 class="form-title">用户登录</h2>
-
-            <!-- 账号输入 -->
             <a-form-item name="userAccount">
               <a-input
                 v-model:value="formState.userAccount"
                 placeholder="请输入账号"
                 size="large"
+                class="auth-input"
               >
                 <template #prefix>
                   <UserOutlined class="input-icon" />
@@ -76,12 +79,12 @@
               </a-input>
             </a-form-item>
 
-            <!-- 密码输入 -->
             <a-form-item name="userPassword">
               <a-input-password
                 v-model:value="formState.userPassword"
                 placeholder="请输入密码"
                 size="large"
+                class="auth-input"
               >
                 <template #prefix>
                   <LockOutlined class="input-icon" />
@@ -89,631 +92,440 @@
               </a-input-password>
             </a-form-item>
 
-            <!-- 登录按钮 -->
-            <a-form-item>
-              <a-button
-                type="primary"
-                html-type="submit"
-                class="submit-btn"
-                :loading="loading"
-              >
-                登录
-              </a-button>
-            </a-form-item>
-
-            <!-- 底部链接 -->
-            <div class="form-footer">
-              没有账号？
-              <router-link to="/user/register" class="login-link">立即注册</router-link>
-            </div>
+            <a-button type="primary" html-type="submit" class="submit-btn" :loading="loading">
+              登录
+              <ArrowRightOutlined />
+            </a-button>
           </a-form>
 
-          <!-- 统一底部链接 -->
-          <div class="footer-links">
-            <a href="#">帮助</a>
-            <a href="#">隐私</a>
-            <a href="#">条款</a>
+          <div class="demo-box">
+            <div class="demo-title">
+              <span>演示账号快捷填充</span>
+              <small>密码仅用于本地演示环境</small>
+            </div>
+            <div class="demo-actions">
+              <a-button block @click="fillDemo('admin', demoPasswords.admin)">管理员演示</a-button>
+              <a-button block @click="fillDemo('linxi', demoPasswords.creator)">创作者演示</a-button>
+              <a-button block @click="fillDemo('chenmo', demoPasswords.photographer)">摄影师演示</a-button>
+            </div>
           </div>
-          <p class="copyright">Copyright © 2024 Crispix AI. All rights reserved.</p>
+
+          <div class="form-footer">
+            没有账号？
+            <router-link to="/user/register" class="login-link">立即注册</router-link>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <p class="auth-copyright">© 2026 图云智库 · 本地测试环境</p>
+      </section>
+    </main>
   </div>
 </template>
 
 <script lang="ts" setup>
-
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import {
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  CheckCircleFilled,
+  LockOutlined,
+  PictureOutlined,
+  RobotOutlined,
+  SafetyCertificateOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
 import { userLoginUsingPost } from '@/api/userController'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
-import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { CloudOutlined, LockOutlined, RocketOutlined,
-  TeamOutlined,UserOutlined } from '@ant-design/icons-vue'
-
-
+import logoUrl from '@/assets/logo.png'
 
 const formState = reactive<API.UserLoginRequest>({
   userAccount: '',
   userPassword: '',
-
-});
-
+})
 
 const router = useRouter()
+const route = useRoute()
 const loginUserStore = useLoginUserStore()
-/**
- * 提交表单
- * @param values
- */
-const handleSubmit = async (values: any) => {
-  const res = await userLoginUsingPost(values)
-  // 登录成功，把登录态保存到全局状态中
-  if (res.data.code === 0 && res.data.data) {
-    await loginUserStore.fetchLoginUser()
-    message.success('登录成功')
-    router.push({
-      path: '/',
-      replace: true,
-    })
-  } else {
-    message.error('登录失败，' + res.data.message)
-  }
+const loading = ref(false)
+
+const demoPasswords = {
+  admin: import.meta.env.VITE_DEMO_ADMIN_PASSWORD ?? '',
+  creator: import.meta.env.VITE_DEMO_CREATOR_PASSWORD ?? '',
+  photographer: import.meta.env.VITE_DEMO_PHOTOGRAPHER_PASSWORD ?? '',
 }
 
+const fillDemo = (account: string, password: string) => {
+  formState.userAccount = account
+  formState.userPassword = password
+  if (!password) {
+    message.warning('演示密码未配置，请在本地 .env.local 中设置')
+    return
+  }
+  message.info('演示账号已填充，点击登录即可')
+}
 
-
+const handleSubmit = async (values: API.UserLoginRequest) => {
+  loading.value = true
+  try {
+    const res = await userLoginUsingPost(values)
+    if (res.data.code === 0 && res.data.data) {
+      await loginUserStore.fetchLoginUser()
+      message.success(`欢迎回来，${res.data.data.userName ?? res.data.data.userAccount}`)
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+      await router.replace(redirect.startsWith('/') ? redirect : '/')
+    } else {
+      message.error('登录失败，' + res.data.message)
+    }
+  } catch (error: any) {
+    message.error('登录异常：' + (error?.message ?? '请稍后重试'))
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
-
-
-
 <style scoped>
-.auth-container {
+.auth-page {
   min-height: 100vh;
+  padding: 0 32px 32px;
+  color: #172033;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(87, 151, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 82%, rgba(54, 208, 181, 0.16), transparent 34%),
+    linear-gradient(145deg, #f5f8ff 0%, #ffffff 52%, #f0fbf8 100%);
+}
+
+.auth-topbar {
   display: flex;
-  position: relative;
-  overflow: hidden;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-}
-
-/* ==================== 背景样式 ==================== */
-.sci-fi-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #6a8ef7 0%, #4b6cf0 100%);
-  z-index: 0;
-  overflow: hidden;
-}
-
-.geometric-pattern {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background-image:
-    radial-gradient(circle at 70% 30%, rgba(255,255,255,0.15) 0%, transparent 20%),
-    radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 20%),
-    linear-gradient(120deg, transparent 50%, rgba(255,255,255,0.03) 50%),
-    linear-gradient(60deg, transparent 50%, rgba(255,255,255,0.03) 50%);
-  transform: rotate(30deg);
-  animation: patternMove 25s linear infinite;
-}
-
-@keyframes patternMove {
-  0% { transform: rotate(30deg) translate(0, 0); }
-  25% { transform: rotate(30deg) translate(-5%, 5%); }
-  50% { transform: rotate(30deg) translate(0, 0); }
-  75% { transform: rotate(30deg) translate(5%, -5%); }
-  100% { transform: rotate(30deg) translate(0, 0); }
-}
-
-/* ==================== 内容区域 ==================== */
-.content-wrapper {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  width: 100%;
-  max-width: 1000px; /* 从1200px减小到1000px */
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1440px;
+  height: 76px;
   margin: 0 auto;
-  padding: 40px 20px;
-  min-height: 100vh;
+}
+
+.brand-link,
+.back-home {
+  display: inline-flex;
   align-items: center;
+  gap: 10px;
+  color: #24334c;
 }
 
-/* ==================== 左侧内容区 ==================== */
-.left-content {
-  flex: 1;
-  padding-right: 120px; /* 从200px减小到120px */
-  color: white;
-  position: relative;
-  animation: fadeInLeft 0.8s ease-out;
-  /* 调整定位 */
-  margin: -100px 0 0 -120px; /* 调整margin值 */
-  transform: translateY(-3%); /* 从-4%调整到-3% */
-}
-
-@keyframes fadeInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 响应式调整 */
-@media (max-width: 992px) {
-  .left-content {
-    padding-right: 0;
-    margin: 0 0 40px 0 !important; /* 从60px减小到40px */
-    text-align: center;
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* 品牌标识 */
-.brand {
-  font-size: 28px;
+.brand-link {
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  margin-bottom: 30px;
-  position: relative;
-  display: inline-block;
 }
 
-.brand::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background: linear-gradient(to right, #fff, transparent);
-  border-radius: 2px;
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
 }
 
-/* 大标题 */
-.slogan {
-  font-size: 40px; /* 从48px减小到40px */
-  font-weight: 900;
-  line-height: 1.15;
-  margin: 30px 0 15px; /* 调整margin */
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  position: relative;
-  letter-spacing: -0.5px;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.95));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  max-width: 90%;
+.back-home {
+  padding: 9px 14px;
+  color: #65728a;
+  border: 1px solid rgba(66, 99, 154, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
 }
 
-/* 描述文字 */
-.jieshi {
-  font-size: 18px; /* 从20px减小到18px */
-  line-height: 1.6;
-  margin-bottom: 40px; /* 从50px减小到40px */
-  max-width: 85%;
-  position: relative;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  font-weight: 300;
-}
-
-.jieshi::before {
-  content: "";
-  position: absolute;
-  left: -15px;
-  top: 0;
-  height: 100%;
-  width: 3px;
-  background: linear-gradient(to bottom, #32c5ff, #b620e0);
-  border-radius: 2px;
-}
-
-/* 特性列表 */
-.feature-list {
+.auth-shell {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px; /* 从25px减小到20px */
-  margin-top: 30px; /* 从40px减小到30px */
-}
-
-.feature-item {
-  display: flex;
+  grid-template-columns: minmax(0, 1.18fr) minmax(420px, 0.82fr);
+  gap: 44px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px; /* 从14px减小到12px */
-  padding: 16px; /* 从20px减小到16px */
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: perspective(500px) translateZ(0);
-  will-change: transform, box-shadow;
+  max-width: 1320px;
+  min-height: calc(100vh - 128px);
+  margin: 0 auto;
 }
 
-.feature-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: perspective(500px) translateZ(20px) translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+.story-panel {
+  padding: 20px 0 40px;
 }
 
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px; /* 从60px减小到50px */
-  height: 50px; /* 从60px减小到50px */
-  background: linear-gradient(135deg, #6a8ef7, #4b6cf0);
-  border-radius: 12px; /* 从14px减小到12px */
-  margin-right: 16px; /* 从20px减小到16px */
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+.story-tag {
+  margin-bottom: 20px;
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+  border: 0;
+  border-radius: 999px;
 }
 
-.feature-item:hover .icon-wrapper {
-  transform: scale(1.1) rotate(5deg);
-}
-
-.feature-icon {
-  font-size: 28px;
-  color: white;
-}
-
-.feature-text h3 {
-  font-size: 18px; /* 从22px减小到18px */
-  font-weight: 600;
-  margin: 0 0 4px 0; /* 调整margin */
-  letter-spacing: 0.3px;
-  background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.95));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.feature-text p {
-  font-size: 16px;
+.story-panel h1 {
+  max-width: 760px;
   margin: 0;
-  line-height: 1.4;
-  opacity: 0.85;
-  font-weight: 300;
+  color: #17233b;
+  font-size: clamp(44px, 5vw, 76px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -3px;
 }
 
-/* ==================== 右侧注册卡片 ==================== */
-.right-content {
-  min-width: 380px; /* 从440px减小到380px */
-  z-index: 3;
-  animation: fadeInRight 0.8s ease-out;
+.story-description {
+  max-width: 680px;
+  margin: 25px 0 0;
+  color: #66748c;
+  font-size: 16px;
+  line-height: 1.95;
 }
 
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 720px;
+  margin-top: 34px;
 }
 
-.auth-card {
-  padding: 36px; /* 从48px减小到36px */
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 20px; /* 从24px减小到20px */
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.05),
-    0 0 0 4px rgba(106, 142, 247, 0.1);
-  animation: cardEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(106, 142, 247, 0.05) 0%, transparent 70%);
-  z-index: 0;
-}
-
-.form-title {
-  color: #1a1a1a;
-  font-size: 22px; /* 从24px减小到22px */
-  font-weight: 600;
-  text-align: left;
-  margin: 0 0 28px 0; /* 从32px减小到28px */
-  position: relative;
-  z-index: 1;
-}
-
-/* ==================== 表单元素 ==================== */
-.auth-container {
-  min-height: 100vh;
+.feature-card {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 14px;
+  padding: 17px 18px;
+  border: 1px solid rgba(65, 101, 158, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8px 24px rgba(54, 83, 129, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.feature-card > :first-child {
+  flex: none;
+  color: #2f6fed;
+  font-size: 22px;
+}
+
+.feature-card div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.feature-card strong {
+  color: #26354e;
+  font-size: 14px;
+}
+
+.feature-card span {
+  color: #8a96aa;
+  font-size: 11px;
+}
+
+.story-footnote {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  color: #61718a;
+  font-size: 12px;
+}
+
+.story-footnote > :first-child {
+  color: #16a58d;
+}
+
+.login-panel {
   position: relative;
-  background: #f0f2f5;
 }
 
-.background-gradient {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 380px;
-  background: linear-gradient(135deg, #4a90e2 0%, #8e54e9 100%);
+.login-card {
+  padding: 34px;
+  border: 1px solid rgba(67, 100, 153, 0.1);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 26px 70px rgba(50, 78, 124, 0.14);
+  backdrop-filter: blur(16px);
 }
 
-/* 输入框样式 */
-:deep(.ant-input) {
-  border-radius: 10px !important; /* 从12px减小到10px */
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  height: 44px; /* 从48px减小到44px */
-  padding-left: 40px !important;
-  position: relative;
-  z-index: 1;
+.login-heading {
+  margin-bottom: 26px;
 }
 
-:deep(.ant-input):hover {
-  border-color: #6a8ef7;
-  box-shadow: 0 0 0 2px rgba(106, 142, 247, 0.2);
+.login-kicker {
+  display: block;
+  margin-bottom: 9px;
+  color: #3577e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.2px;
 }
 
-:deep(.ant-input):focus {
-  border-color: #4b6cf0;
-  box-shadow: 0 0 0 3px rgba(75, 108, 240, 0.2);
+.login-heading h2 {
+  margin: 0;
+  color: #1d2b45;
+  font-size: 28px;
 }
 
-:deep(.ant-input-affix-wrapper) {
-  border-radius: 10px !important; /* 从12px减小到10px */
-  overflow: hidden;
+.login-heading p {
+  margin: 9px 0 0;
+  color: #8491a5;
+  font-size: 13px;
+}
+
+.auth-input {
+  height: 49px;
+  border-radius: 13px;
+}
+
+.auth-input :deep(.ant-input-affix-wrapper),
+.auth-input:deep(.ant-input-affix-wrapper) {
+  height: 49px;
+  border-radius: 13px;
 }
 
 .input-icon {
-  color: #6a8ef7;
-  font-size: 16px;
-  opacity: 0.8;
+  color: #6f809b;
 }
 
-/* 按钮样式 */
 .submit-btn {
   width: 100%;
-  height: 48px; /* 从52px减小到48px */
-  font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #4a90e2, #8e54e9);
-  border: none;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-radius: 10px; /* 从12px减小到10px */
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
+  height: 49px;
+  margin-top: 6px;
+  font-weight: 800;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(96deg, #3069e8, #16a58d);
+  box-shadow: 0 12px 24px rgba(47, 111, 237, 0.24);
 }
 
-.submit-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #6a8ef7, #4b6cf0);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
+.demo-box {
+  margin-top: 25px;
+  padding: 16px;
+  border: 1px solid rgba(72, 106, 160, 0.1);
+  border-radius: 15px;
+  background: #f7faff;
 }
 
-.submit-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(106, 142, 247, 0.4);
+.demo-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.submit-btn:hover::before {
-  opacity: 1;
+.demo-title span {
+  color: #485a73;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.submit-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(106, 142, 247, 0.3);
+.demo-title small {
+  color: #a0aabb;
+  font-size: 10px;
 }
 
-/* ==================== 底部链接 ==================== */
+.demo-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.demo-actions :deep(.ant-btn) {
+  height: 34px;
+  padding-inline: 5px;
+  color: #59708f;
+  font-size: 11px;
+  border-color: rgba(72, 106, 160, 0.12);
+  border-radius: 10px;
+  background: #fff;
+}
+
 .form-footer {
+  margin-top: 22px;
+  color: #8b97a9;
+  font-size: 13px;
   text-align: center;
-  margin-top: 24px; /* 从30px减小到24px */
-  color: #666;
-  font-size: 14px; /* 从15px减小到14px */
-  position: relative;
-  z-index: 1;
 }
 
 .login-link {
-  color: #4b6cf0;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
+  margin-left: 4px;
+  color: #3577e8;
+  font-weight: 700;
 }
 
-.login-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: #4b6cf0;
-  transition: width 0.3s ease;
-}
-
-.login-link:hover {
-  opacity: 0.9;
-  color: #3a5bd9;
-  text-decoration: none;
-}
-
-.login-link:hover::after {
-  width: 100%;
-}
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 40px; /* 从50px减小到40px */
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.footer-links a {
-  color: inherit;
-  font-size: 13px;
-  transition: color 0.2s, transform 0.2s;
-  position: relative;
-}
-
-.footer-links a::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 1px;
-  background: #6a8ef7;
-  transition: width 0.3s ease;
-}
-
-.footer-links a:hover {
-  color: #4b6cf0;
-  text-decoration: none;
-  transform: translateY(-2px);
-}
-
-.footer-links a:hover::after {
-  width: 100%;
-}
-
-.copyright {
+.auth-copyright {
+  margin: 18px 0 0;
+  color: #a2acbb;
+  font-size: 11px;
   text-align: center;
-  color: rgba(0, 0, 0, 0.7);
-  font-size: 13px;
-  margin-top: 20px;
-  opacity: 0.8;
 }
 
-/* ==================== 动画效果 ==================== */
-@keyframes cardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ==================== 响应式设计 ==================== */
-@media (max-width: 992px) {
-  .content-wrapper {
-    flex-direction: column;
-    padding: 40px 20px 80px;
-  }
-
-  .left-content {
-    padding-right: 0;
-    margin: 0 0 40px 0 !important; /* 从60px减小到40px */
-    text-align: center;
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-
-  .jieshi::before {
-    display: none;
-  }
-
-  .feature-item {
-    justify-content: center;
-  }
-
-  .right-content {
-    min-width: auto;
-    width: 100%;
-    max-width: 500px;
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-
-  .slogan {
-    font-size: 36px;
-    max-width: 100%;
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .jieshi {
-    max-width: 100%;
-    text-align: center;
-  }
-}
-
-@media (max-width: 576px) {
-  .auth-card {
-    padding: 32px 24px;
-  }
-
-  .slogan {
-    font-size: 28px;
-  }
-
-  .icon-wrapper {
-    width: 48px;
-    height: 48px;
-    margin-right: 15px;
-  }
-
-  .feature-icon {
-    font-size: 24px;
-  }
-
-  .feature-list {
+@media (max-width: 1000px) {
+  .auth-shell {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 20px;
+    max-width: 720px;
+    padding: 28px 0 40px;
   }
 
-  .form-title {
-    font-size: 20px;
-    margin-bottom: 24px;
+  .story-panel {
+    text-align: center;
   }
 
-  :deep(.ant-input) {
-    height: 40px;
+  .story-panel h1,
+  .story-description,
+  .feature-grid,
+  .story-footnote {
+    margin-right: auto;
+    margin-left: auto;
   }
 
-  .submit-btn {
-    height: 44px;
+  .feature-grid {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-page {
+    padding: 0 16px 24px;
+  }
+
+  .auth-topbar {
+    height: 66px;
+  }
+
+  .brand-link {
+    font-size: 16px;
+  }
+
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .back-home {
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+
+  .story-panel h1 {
+    font-size: 40px;
+    letter-spacing: -1.8px;
+  }
+
+  .story-description {
+    font-size: 14px;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-card {
+    padding: 24px 18px;
+    border-radius: 20px;
+  }
+
+  .demo-actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>

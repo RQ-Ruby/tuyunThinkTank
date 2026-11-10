@@ -63,7 +63,7 @@
               @click="toggleFavorite"
             >
               <template #icon><HeartOutlined v-if="!isFavorite" class="btn-icon" /><HeartFilled v-else class="btn-icon" /></template>
-              {{ isFavorite ? '' : '' }}
+              {{ isFavorite ? '已收藏' : '收藏' }}
             </a-button>
             <a-button v-if="canEdit" @click="doEdit" class="action-btn">
               <template #icon><EditOutlined class="btn-icon" /></template>
@@ -106,15 +106,17 @@ import { deletePictureUsingPost, doPictureReviewUsingPost, getPictureVoByIdUsing
 import { addFavoriteUsingPost, removeFavoriteUsingPost, checkFavoriteUsingGet } from '@/api/pictureFavoriteController'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
-import router from '@/router'
+import { useRouter } from 'vue-router'
 import { downloadImage, formatSize } from '@/util'
 import { PIC_REVIEW_STATUS_ENUM } from '@/constants/picyure'
-import { HeartOutlined, HeartFilled } from '@ant-design/icons-vue'
+import { CheckOutlined, CloseOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HeartFilled, HeartOutlined } from '@ant-design/icons-vue'
 /*图片下载  */
 const doDownload = () => {
   downloadImage(picture.value.url)
 }
 //增管理员判断
+const router = useRouter()
+
 const isAdmin = computed(() => {
   return loginUserStore.loginUser.userRole === 'admin'
 })
@@ -328,15 +330,17 @@ onMounted(() => {
 }
 
 .action-btn {
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border-radius: 50%;
-  display: flex;
+  width: auto;
+  min-width: 82px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .action-btn:hover {

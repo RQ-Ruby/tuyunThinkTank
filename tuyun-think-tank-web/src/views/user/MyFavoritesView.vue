@@ -42,7 +42,7 @@ const fetchData = async () => {
     const res = await listMyFavoritePictureByPageUsingPost(searchParams)
     if (res.data.code === 0 && res.data.data) {
       dataList.value = res.data.data.records || []
-      total.value = res.data.data.total || 0
+      total.value = Number(res.data.data.total ?? 0)
     } else {
       message.error(res.data.message || '获取收藏列表失败')
     }

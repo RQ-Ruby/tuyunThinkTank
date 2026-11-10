@@ -12,7 +12,6 @@ import { useRouter } from 'vue-router'
 import { listSpaceVoByPageUsingPost } from '@/api/spaceController'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
-import type { SpaceVO } from '@/types/space'
 
 // 组合式状态
 const router = useRouter()
@@ -47,8 +46,8 @@ const redirectToUserSpace = async () => {
 
     const { code, data, message: errorMsg } = response.data
 
-    if (code === 0 && data?.records?.length > 0) {
-      const space: SpaceVO = data.records[0]
+    if (code === 0 && data?.records?.length) {
+      const space = data.records[0]
       router.replace(`/space/${space.id}`)
     } else {
       router.replace('/add_space')

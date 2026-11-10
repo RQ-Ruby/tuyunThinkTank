@@ -30,7 +30,7 @@
 
         <!-- 底部 -->
         <a-layout-footer class="footer">
-          © 2025 图云智库
+          © 2026 图云智库
           关注我：<a href="https://github.com/rich0807" target="_blank">芮七</a>
         </a-layout-footer>
       </div>
@@ -43,8 +43,8 @@ import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 import WebHeader from '@/components/webHeader.vue'
 import WebSider from '@/components/webSider.vue'
-import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
-import { useSidebarStore } from '@/stores/useSidebarStore.ts'
+import { useLoginUserStore } from '@/stores/useLoginUserStore'
+import { useSidebarStore } from '@/stores/useSidebarStore'
 
 const route = useRoute()
 const loginUserStore = useLoginUserStore()

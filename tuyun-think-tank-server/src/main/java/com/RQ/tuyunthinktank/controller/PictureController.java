@@ -99,7 +99,6 @@ public class PictureController {
      */
     @PostMapping("/upload")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_UPLOAD)
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file") MultipartFile file,
                                                  PictureUploadRequest pictureUploadRequest,
                                                  HttpServletRequest request) {
@@ -200,21 +199,34 @@ public class PictureController {
         // 查询缓存 / 数据库
         Picture picture = pictureService.getPictureByIdWithCache(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 空间的图片，需要校验权限
+        // 公共图片允许游客查看；草稿和未过审图片仅作者与管理员可见
+        User loginUser = null;
+        try {
+            loginUser = userService.getLoginUser(request);
+        } catch (BusinessException ignored) {
+            // 游客访问公共图库时没有登录态是正常情况
+        }
+        boolean isOwner = loginUser != null && picture.getUserId().equals(loginUser.getId());
+        boolean isAdmin = loginUser != null && UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole());
+        if (picture.getSpaceId() == null && !isOwner && !isAdmin) {
+            ThrowUtils.throwIf(Integer.valueOf(1).equals(picture.getIsDraft())
+                            || !Integer.valueOf(PictureReviewStatusEnum.PASS.getValue()).equals(picture.getReviewStatus()),
+                    ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        }
+
+        // 空间图片必须登录且有查看权限
         Space space = null;
         Long spaceId = picture.getSpaceId();
         if (spaceId != null) {
+            ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
             ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR);
             space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
         }
-        // 获取权限列表
-        User loginUser = userService.getLoginUser(request);
         List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
         PictureVO pictureVO = pictureService.getPictureVO(picture, request);
         pictureVO.setPermissionList(permissionList);
-        // 获取封装类
         return ResultUtils.success(pictureVO);
     }
 

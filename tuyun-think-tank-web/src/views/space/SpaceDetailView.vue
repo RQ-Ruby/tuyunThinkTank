@@ -2,7 +2,7 @@
   <div id="spaceDetailPage">
     <!-- 空间信息 -->
     <a-flex justify="space-between">
-      <h2>{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h2>
+      <h2>{{ space.spaceName }}（{{ spaceTypeText }}）</h2>
       <a-space size="middle">
         <a-button
           v-if="canUpload"
@@ -20,12 +20,12 @@
           成员管理
         </a-button>
         <a-tooltip
-          :title="`占用空间 ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
+          :title="`占用空间 ${formatSize(space.totalSize ?? 0)} / ${formatSize(space.maxSize ?? 0)}`"
         >
           <a-progress
             type="circle"
             :size="42"
-            :percent="((space.totalSize * 100) / space.maxSize).toFixed(1)"
+            :percent="spaceUsagePercent"
           />
         </a-tooltip>
       </a-space>
@@ -50,11 +50,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
 import { message } from 'ant-design-vue'
 import {
   listPictureVoByPageUsingPost,
-} from '@/api/pictureController.ts'
+} from '@/api/pictureController'
 import { formatSize } from '@/util'
 import { SPACE_TYPE_MAP, SPACE_PERMISSION_ENUM } from '@/constants/space'
 import PictureList from '@/components/PictureList.vue'
@@ -67,6 +67,19 @@ interface Props {
 const props = defineProps<Props>()
 const router = useRouter()
 const space = ref<API.SpaceVO>({})
+const spaceId = computed(() => {
+  const id = String(props.id)
+  return /^\d+$/.test(id) ? id : undefined
+})
+const spaceTypeText = computed(() => {
+  const spaceType = space.value.spaceType
+  return spaceType == null ? '-' : (SPACE_TYPE_MAP[spaceType] ?? '未知空间')
+})
+const spaceUsagePercent = computed(() => {
+  const totalSize = space.value.totalSize ?? 0
+  const maxSize = space.value.maxSize ?? 0
+  return maxSize > 0 ? Number(((totalSize * 100) / maxSize).toFixed(1)) : 0
+})
 
 // 权限判断
 const canUpload = computed(() => {
@@ -79,8 +92,13 @@ const canManageUser = computed(() => {
 // -------- 获取空间详情 --------
 const fetchSpaceDetail = async () => {
   try {
+    if (!spaceId.value) {
+      message.error('空间 ID 无效')
+      router.replace('/')
+      return
+    }
     const res = await getSpaceVoByIdUsingGet({
-      id: props.id,
+      id: spaceId.value,
     })
     if (res.data.code === 0 && res.data.data) {
       space.value = res.data.data
@@ -113,15 +131,19 @@ const searchParams = ref<API.PictureQueryRequest>({
 // 获取数据
 const fetchData = async () => {
   loading.value = true
+  if (!spaceId.value) {
+    loading.value = false
+    return
+  }
   // 转换搜索参数
   const params = {
-    spaceId: props.id,
+    spaceId: spaceId.value,
     ...searchParams.value,
   }
   const res = await listPictureVoByPageUsingPost(params)
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
-    total.value = res.data.data.total ?? 0
+    total.value = Number(res.data.data.total ?? 0)
   } else {
     message.error('获取数据失败，' + res.data.message)
   }

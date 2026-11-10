@@ -3,7 +3,7 @@
     <!-- 新增输入框容器 -->
     <div class="input-container">
       <a-input-group compact>
-        <a-input v-model:value="value19" style="width: calc(100% - 200px)"  placeholder="请输入图片URL"/>
+        <a-input v-model:value="imageUrl" style="width: calc(100% - 200px)" placeholder="请输入图片URL" />
         <a-tooltip title="Upload pictures">
           <a-button    type="primary"
                        @click="handleUpload"
@@ -31,12 +31,14 @@ import { UploadOutlined } from '@ant-design/icons-vue';
 // 上传成功后返回的图片
 interface Props {
   picture?: API.PictureVO
+  /** 空间 id */
+  spaceId?: string
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 // 接收父组件传递的图片
 const props = defineProps<Props>()
 // 上传图片的url
-const value19 = ref<String>()
+const imageUrl = ref('')
 //状态
 const loading = ref<boolean>(false)
 
@@ -45,13 +47,21 @@ const loading = ref<boolean>(false)
  * @param file
  */
 const handleUpload = async () => {
+  const url = imageUrl.value.trim()
+  if (!url) {
+    message.warning('请输入图片 URL')
+    return
+  }
   loading.value = true
   try {
- const params: API.PictureUploadRequest = {
-      url: imageUrl.value,
-      id: props.picture?.id
+    const params: API.PictureUploadRequest = {
+      url,
+      id: props.picture?.id,
     }
-// 调用上传API（POST请求）
+    if (props.spaceId) {
+      params.spaceId = props.spaceId
+    }
+    // 调用上传API（POST请求）
     const res = await uploadPictureByUrlUsingPost(params)
     // 处理API响应：状态码为0且data存在时视为成功
     if (res.data.code === 0 && res.data.data) {
@@ -62,15 +72,12 @@ const handleUpload = async () => {
       message.error(`上传失败: ${res.data.message}`)
     }
   } catch (error) {
-    message.error('上传请求异常');
-      console.error(error)
+    message.error('上传请求异常')
+    console.error(error)
   } finally {
     loading.value = false
   }
-
 }
-
-
 </script>
 
 <style scoped>

@@ -10,7 +10,7 @@ import App from './App.vue'
 import VueCropper from 'vue-cropper';
 import 'vue-cropper/dist/index.css'
 import router from './router'
-import '@/permission.ts'
+import '@/permission'
 
 const app = createApp(App)
 

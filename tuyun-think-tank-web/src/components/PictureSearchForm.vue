@@ -7,7 +7,13 @@
       <a-input v-model:value="searchParams.category" placeholder="请输入分类" allow-clear />
     </a-form-item>
     <a-form-item label="标签" name="tags">
-      <a-input v-model:value="searchParams.tags" placeholder="请输入标签" allow-clear />
+      <a-select
+        v-model:value="searchParams.tags"
+        mode="tags"
+        placeholder="请输入标签，回车确认"
+        allow-clear
+        style="min-width: 220px"
+      />
     </a-form-item>
     <a-form-item>
       <a-button type="primary" html-type="submit">搜索</a-button>
@@ -32,7 +38,7 @@ const doSearch = () => {
 }
 
 const doReset = () => {
-  Object.keys(searchParams).forEach((key) => {
+  ;(Object.keys(searchParams) as (keyof API.PictureQueryRequest)[]).forEach((key) => {
     delete searchParams[key]
   })
   props.onSearch?.(searchParams)
