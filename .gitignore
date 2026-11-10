@@ -18,3 +18,4 @@ docs/
 *.iml
 *.log
 logs/
+.work/
